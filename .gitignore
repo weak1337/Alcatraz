@@ -1,0 +1,4 @@
+*.opendb
+x64/
+Alcatraz/x64
+.vs/
