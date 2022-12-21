@@ -19,15 +19,18 @@ pdbparser::pdbparser(pe64* pe) {
 
 
 	for (auto current_debug_dir = reinterpret_cast<IMAGE_DEBUG_DIRECTORY*>(pe->get_buffer()->data() + debug_directory); current_debug_dir->SizeOfData; current_debug_dir++) {
+		
 		if (current_debug_dir->Type != IMAGE_DEBUG_TYPE_CODEVIEW)
 			continue;
 
-		auto codeview_info = reinterpret_cast<codeviewInfo_t*>(pe->get_buffer()->data() + current_debug_dir->PointerToRawData);
+		auto codeview_info = 
+			reinterpret_cast<codeviewInfo_t*>(pe->get_buffer()->data() + current_debug_dir->PointerToRawData);
 		
 		if(!std::filesystem::exists(codeview_info->PdbFileName))
 			throw std::runtime_error("couldn't find linked pdb file!");
 
-		this->module_base = reinterpret_cast<uint8_t*>(SymLoadModuleEx(GetCurrentProcess(), 0, codeview_info->PdbFileName, 0, 0x10000000, static_cast<std::uint32_t>(std::filesystem::file_size(codeview_info->PdbFileName)), 0, 0));
+		this->module_base = 
+			reinterpret_cast<uint8_t*>(SymLoadModuleEx(GetCurrentProcess(), 0, codeview_info->PdbFileName, 0, 0x10000000, static_cast<std::uint32_t>(std::filesystem::file_size(codeview_info->PdbFileName)), 0, 0));
 
 		if(!this->module_base)
 			throw std::runtime_error("SymLoadModuleEx failed!");
@@ -64,7 +67,9 @@ std::vector<pdbparser::sym_func>pdbparser::parse_functions() {
 
 			sym_func new_function{};
 
-			auto status = SymGetTypeInfo(GetCurrentProcess(), callbstr->base, psym_info->Index, TI_GET_OFFSET, &new_function.offset);
+			auto status = 
+				SymGetTypeInfo(GetCurrentProcess(), callbstr->base, psym_info->Index, TI_GET_OFFSET, &new_function.offset);
+
 			if (!status)
 				SymGetTypeInfo(GetCurrentProcess(), callbstr->base, psym_info->Index, TI_GET_ADDRESSOFFSET, &new_function.offset);
 
