@@ -30,7 +30,7 @@ pe64::pe64(std::string binary_path) {
 		reinterpret_cast<PIMAGE_NT_HEADERS>(temp_buffer.data() + dos->e_lfanew);
 
 	if(nt->FileHeader.Machine != IMAGE_FILE_MACHINE_AMD64)
-		throw std::runtime_error("Alcatraz doesn't support 32bit pe files!");
+		throw std::runtime_error("Alcatraz doesn't support 32bit binaries!");
 
 	this->buffer.resize(nt->OptionalHeader.SizeOfImage);
 	this->buffer.clear();

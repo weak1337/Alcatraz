@@ -1,0 +1,6 @@
+[submodule "Alcatraz/extern/asmjit"]
+	path = Alcatraz/extern/asmjit
+	url = https://github.com/asmjit/asmjit
+[submodule "Alcatraz/extern/zydis"]
+	path = Alcatraz/extern/zydis
+	url = https://github.com/zyantific/zydis

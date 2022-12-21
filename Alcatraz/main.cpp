@@ -12,6 +12,7 @@ int main() {
 		pdbparser pdb(&pe);
 
 		auto functions = pdb.parse_functions();
+		std::cout << "Successfully parsed " << functions.size() << " function(s)" << std::endl;
 		
 	}
 	catch (std::runtime_error e)
