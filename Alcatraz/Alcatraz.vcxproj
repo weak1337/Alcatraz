@@ -129,10 +129,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="obfuscator\obfuscator.cpp" />
     <ClCompile Include="pdbparser\pdbparser.cpp" />
     <ClCompile Include="pe\pe.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="obfuscator\obfuscator.h" />
     <ClInclude Include="pdbparser\pdbparser.h" />
     <ClInclude Include="pe\pe.h" />
   </ItemGroup>

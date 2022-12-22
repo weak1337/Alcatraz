@@ -14,15 +14,15 @@ private:
 		char PdbFileName[ANYSIZE_ARRAY];
 	};
 
+	uint8_t* module_base;
+
+public:
+
 	struct sym_func {
 		uint32_t offset;
 		std::string name;
 		uint32_t size;
 	};
-
-	uint8_t* module_base;
-
-public:
 
 	pdbparser(pe64* pe);
 	

@@ -19,6 +19,9 @@
     <Filter Include="Header Files\pdbparser">
       <UniqueIdentifier>{9b2f408d-e68f-41b5-bfcd-67ed1770e511}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\obfuscator">
+      <UniqueIdentifier>{dbf78046-30db-4f6f-aaeb-f97bf99274d6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -30,6 +33,9 @@
     <ClCompile Include="pdbparser\pdbparser.cpp">
       <Filter>Header Files\pdbparser</Filter>
     </ClCompile>
+    <ClCompile Include="obfuscator\obfuscator.cpp">
+      <Filter>Header Files\obfuscator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pe\pe.h">
@@ -37,6 +43,9 @@
     </ClInclude>
     <ClInclude Include="pdbparser\pdbparser.h">
       <Filter>Header Files\pdbparser</Filter>
+    </ClInclude>
+    <ClInclude Include="obfuscator\obfuscator.h">
+      <Filter>Header Files\obfuscator</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

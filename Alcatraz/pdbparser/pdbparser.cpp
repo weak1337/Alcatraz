@@ -24,8 +24,8 @@ pdbparser::pdbparser(pe64* pe) {
 			continue;
 
 		auto codeview_info = 
-			reinterpret_cast<codeviewInfo_t*>(pe->get_buffer()->data() + current_debug_dir->PointerToRawData);
-		
+			reinterpret_cast<codeviewInfo_t*>(pe->get_buffer_not_relocated()->data() + current_debug_dir->PointerToRawData);
+
 		if(!std::filesystem::exists(codeview_info->PdbFileName))
 			throw std::runtime_error("couldn't find linked pdb file!");
 
@@ -36,7 +36,7 @@ pdbparser::pdbparser(pe64* pe) {
 			throw std::runtime_error("SymLoadModuleEx failed!");
 
 		return;
-
+		
 	}
 
 	throw std::runtime_error("unexpected error during pdbparser setup");
