@@ -22,6 +22,9 @@
     <Filter Include="Header Files\obfuscator">
       <UniqueIdentifier>{dbf78046-30db-4f6f-aaeb-f97bf99274d6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\obfuscator\passes">
+      <UniqueIdentifier>{dff3db56-3cf7-4e9a-aa39-f68fcff27846}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -35,6 +38,9 @@
     </ClCompile>
     <ClCompile Include="obfuscator\obfuscator.cpp">
       <Filter>Header Files\obfuscator</Filter>
+    </ClCompile>
+    <ClCompile Include="obfuscator\passes\constant.cpp">
+      <Filter>Header Files\obfuscator\passes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

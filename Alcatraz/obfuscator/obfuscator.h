@@ -73,6 +73,14 @@ private:
 
 	void compile(PIMAGE_SECTION_HEADER new_section);
 
+	std::vector<instruction_t>instructions_from_jit(uint8_t* code, uint32_t size);
+
+	/*
+		These are our actual obfuscation passes
+	*/
+
+	bool obfuscate_constant(std::vector<obfuscator::function_t>::iterator& func_iter,std::vector<obfuscator::instruction_t>::iterator& instruction_iter);
+
 public:
 
 	obfuscator(pe64* pe);

@@ -7,9 +7,11 @@
 
 int main() {
 	std::string binary_path = 
-		//"C:\\Users\\bsodcloud\\Desktop\\Klar.gg\\Hello\\x64\\Release\\hello.exe";
+	//	"C:\\Users\\bsodcloud\\Desktop\\Klar.gg\\Hello\\x64\\Release\\hello.exe";
 		"C:\\Users\\bsodcloud\\Desktop\\Klar.gg\\KlarNetworking - Kopie\\x64\\Release\\Klarclient.exe";
+
 	try {
+		srand(time(NULL));
 
 		pe64 pe(binary_path);
 		pdbparser pdb(&pe);
@@ -21,13 +23,10 @@ int main() {
 		obfuscator obf(&pe);
 		obf.create_functions(functions);
 		obf.run(new_section);
-
-
-		
+	
 		auto extension = std::filesystem::path(binary_path).extension();
 		pe.save_to_disk(std::filesystem::path(binary_path).replace_extension().u8string() + ".obf" + extension.u8string(), new_section, obf.get_added_size());
-		
-		
+			
 	}
 	catch (std::runtime_error e)
 	{

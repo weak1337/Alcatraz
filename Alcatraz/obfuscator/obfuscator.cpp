@@ -30,6 +30,7 @@ void obfuscator::create_functions(std::vector<pdbparser::sym_func>functions) {
 
 	int function_iterator = 0;
 	for (auto function : functions) {
+
 		if (std::find(visited_rvas.begin(), visited_rvas.end(), function.offset) != visited_rvas.end())
 			continue;
 		if (function.size < 5)
@@ -50,9 +51,8 @@ void obfuscator::create_functions(std::vector<pdbparser::sym_func>functions) {
 			if (offset == 0)
 				new_instruction.is_first_instruction = true;
 			new_function.instructions.push_back(new_instruction);
+			offset += new_instruction.zyinstr.length;
 
-
-			offset += new_instruction.zyinstr.length;;
 		}
 
 		visited_rvas.push_back(function.offset);
@@ -249,9 +249,10 @@ uint16_t rel8_to16(ZydisMnemonic mnemonic) {
 bool obfuscator::fix_relative_jmps(function_t* func) {
 
 	for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); instruction++) {
+
 		if (instruction->isjmpcall && instruction->relative.target_inst_id != -1) {
 
-			instruction_t inst;
+			instruction_t inst{};
 
 			if (!this->find_instruction_by_id(instruction->relative.target_func_id, instruction->relative.target_inst_id, &inst)) {
 				return false;
@@ -285,6 +286,8 @@ bool obfuscator::fix_relative_jmps(function_t* func) {
 						instruction->raw_bytes.resize(6);
 						*(uint16_t*)(instruction->raw_bytes.data()) = new_opcode;
 						*(int32_t*)(&instruction->raw_bytes.data()[2]) = (int32_t)(inst.relocated_address - instruction->relocated_address - instruction->zyinstr.length);
+
+						instruction->reload();
 
 						for (auto instruction2 = instruction; instruction2 != func->instructions.end(); ++instruction2) {
 							instruction2->relocated_address += 4;
@@ -470,6 +473,29 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 	if (!this->analyze_functions())
 		throw std::runtime_error("couldn't analyze functions");
 
+	//Actual obfuscation passes
+	for (auto func = functions.begin(); func != functions.end(); func++) {
+		for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); instruction++) {
+
+			if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_MOV) {
+
+				//Obfuscate constant values
+				if (instruction->zyinstr.operands[0].type == ZYDIS_OPERAND_TYPE_REGISTER && instruction->zyinstr.operands[1].type == ZYDIS_OPERAND_TYPE_IMMEDIATE) {
+					int randnum = rand() % 5 + 1;
+					int i = 0;
+					while (this->obfuscate_constant(func, instruction) && i < randnum) {
+						instruction -= 6;
+						i++;
+					}
+
+				
+				}
+
+			}
+
+		}
+	}
+	
 	this->relocate(new_section);
 
 	if(!this->convert_relative_jmps())
@@ -483,6 +509,23 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 
 uint32_t obfuscator::get_added_size() {
 	return this->total_size_used;
+}
+
+std::vector<obfuscator::instruction_t>obfuscator::instructions_from_jit(uint8_t* code, uint32_t size) {
+
+	std::vector<instruction_t>instructions;
+
+	uint32_t offset = 0;
+	ZydisDecodedInstruction zyinstruction{};
+	while (ZYAN_SUCCESS(ZydisDecoderDecodeBuffer(&decoder, (void*)(code + offset), size - offset, &zyinstruction))) {
+
+		instruction_t new_instruction{};
+		new_instruction.load(-1, zyinstruction, (uint64_t)(code + offset));
+		instructions.push_back(new_instruction);
+		offset += new_instruction.zyinstr.length;
+	}
+	
+	return instructions;
 }
 
 bool is_jmpcall(ZydisDecodedInstruction instr)
@@ -591,6 +634,7 @@ void obfuscator::instruction_t::load(int funcid,ZydisDecodedInstruction zyinstru
 }
 
 void obfuscator::instruction_t::reload() {
+	ZydisDecoderDecodeBuffer(&decoder, this->raw_bytes.data(), this->raw_bytes.size(), &this->zyinstr);
 	this->load_relative_info();
 }
 
