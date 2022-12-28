@@ -105,6 +105,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -130,8 +131,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="obfuscator\misc\cfflattener.cpp" />
+    <ClCompile Include="obfuscator\misc\iat.cpp" />
     <ClCompile Include="obfuscator\obfuscator.cpp" />
     <ClCompile Include="obfuscator\passes\constant.cpp" />
+    <ClCompile Include="obfuscator\passes\lea.cpp" />
     <ClCompile Include="pdbparser\pdbparser.cpp" />
     <ClCompile Include="pe\pe.cpp" />
   </ItemGroup>

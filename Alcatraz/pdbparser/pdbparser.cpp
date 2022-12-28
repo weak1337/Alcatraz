@@ -27,7 +27,7 @@ pdbparser::pdbparser(pe64* pe) {
 			reinterpret_cast<codeviewInfo_t*>(pe->get_buffer_not_relocated()->data() + current_debug_dir->PointerToRawData);
 
 		if(!std::filesystem::exists(codeview_info->PdbFileName))
-			throw std::runtime_error("couldn't find linked pdb file!");
+			throw std::runtime_error("couldn't find linked pdb file: " + std::string(codeview_info->PdbFileName));
 
 		this->module_base = 
 			reinterpret_cast<uint8_t*>(SymLoadModuleEx(GetCurrentProcess(), 0, codeview_info->PdbFileName, 0, 0x10000000, static_cast<std::uint32_t>(std::filesystem::file_size(codeview_info->PdbFileName)), 0, 0));

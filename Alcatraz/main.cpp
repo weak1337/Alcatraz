@@ -7,8 +7,9 @@
 
 int main() {
 	std::string binary_path = 
-	//	"C:\\Users\\bsodcloud\\Desktop\\Klar.gg\\Hello\\x64\\Release\\hello.exe";
-		"C:\\Users\\bsodcloud\\Desktop\\Klar.gg\\KlarNetworking - Kopie\\x64\\Release\\Klarclient.exe";
+	//	"C:\\Users\\reale\\Desktop\\Alcatraz\\x64\\Release\\Alcatraz.exe";
+		//"C:\\Users\\reale\\Desktop\\Klar.gg\\Hello\\x64\\Release\\hello.exe";
+		"C:\\Users\\reale\\Desktop\\Klar.gg\\KlarNetworking - Kopie\\x64\\Release\\Klarclient.exe";
 
 	try {
 		srand(time(NULL));
@@ -30,7 +31,7 @@ int main() {
 	}
 	catch (std::runtime_error e)
 	{
-		std::cout << "Runtime error: " << e.what();
+		std::cout << "Runtime error: " << e.what() << std::endl;
 	}
 
 	std::cout << "Finished" << std::endl;

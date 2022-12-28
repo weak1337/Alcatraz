@@ -4,6 +4,9 @@
 #include "../pdbparser/pdbparser.h"
 
 #include <string>
+#include <unordered_map>
+#include <asmjit/asmjit.h>
+using namespace asmjit;
 
 class obfuscator {
 private:
@@ -11,6 +14,8 @@ private:
 	pe64* pe;
 
 	static int instruction_id;
+
+	static std::unordered_map<ZydisRegister_, x86::Gp>lookupmap;
 
 	struct instruction_t {
 
@@ -32,6 +37,7 @@ private:
 		}relative;
 
 		uint64_t location_of_data;
+
 
 		void load_relative_info();
 		void load(int funcid, std::vector<uint8_t>raw_data);
@@ -76,10 +82,18 @@ private:
 	std::vector<instruction_t>instructions_from_jit(uint8_t* code, uint32_t size);
 
 	/*
+		Miscellaneous
+	*/
+
+	bool flatten_control_flow(std::vector<obfuscator::function_t>::iterator& func_iter);
+	bool obfuscate_iat_call(std::vector<obfuscator::function_t>::iterator& func_iter, std::vector<obfuscator::instruction_t>::iterator& instruction_iter);
+
+	/*
 		These are our actual obfuscation passes
 	*/
 
 	bool obfuscate_constant(std::vector<obfuscator::function_t>::iterator& func_iter,std::vector<obfuscator::instruction_t>::iterator& instruction_iter);
+	bool obfuscsate_lea(std::vector<obfuscator::function_t>::iterator& func_iter, std::vector<obfuscator::instruction_t>::iterator& instruction_iter);
 
 public:
 
@@ -92,3 +106,5 @@ public:
 	uint32_t get_added_size();
 
 };
+
+
