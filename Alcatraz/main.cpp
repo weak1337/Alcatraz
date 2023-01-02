@@ -9,7 +9,8 @@ int main() {
 	std::string binary_path = 
 	//	"C:\\Users\\reale\\Desktop\\Alcatraz\\x64\\Release\\Alcatraz.exe";
 		//"C:\\Users\\reale\\Desktop\\Klar.gg\\Hello\\x64\\Release\\hello.exe";
-		"C:\\Users\\bsodcloud\\Desktop\\Klar.gg\\KlarNetworking - Kopie\\x64\\Release\\Klarclient.exe";
+		//"C:\\Users\\bsodcloud\\Desktop\\Klar.gg\\KlarNetworking - Kopie\\x64\\Release\\Klarclient.exe";
+		"C:\\Users\\bsodcloud\\Desktop\\projects\\pe_obf\\x64\\Release\\build.exe";
 
 	const clock_t begin_time = clock();
 
@@ -17,7 +18,8 @@ int main() {
 		srand(time(NULL));
 
 		pe64 pe(binary_path);
-		pdbparser pdb(&pe);
+		pdbparser pdb(&pe, binary_path);
+	
 		auto functions = pdb.parse_functions();
 		std::cout << "Successfully parsed " << functions.size() << " function(s)" << std::endl;
 

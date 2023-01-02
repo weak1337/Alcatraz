@@ -42,9 +42,6 @@
     <ClCompile Include="obfuscator\obfuscator.cpp">
       <Filter>Header Files\obfuscator</Filter>
     </ClCompile>
-    <ClCompile Include="obfuscator\passes\constant.cpp">
-      <Filter>Header Files\obfuscator\passes</Filter>
-    </ClCompile>
     <ClCompile Include="obfuscator\passes\lea.cpp">
       <Filter>Header Files\obfuscator\passes</Filter>
     </ClCompile>
@@ -55,6 +52,12 @@
       <Filter>Header Files\obfuscator\misc</Filter>
     </ClCompile>
     <ClCompile Include="obfuscator\passes\ff.cpp">
+      <Filter>Header Files\obfuscator\passes</Filter>
+    </ClCompile>
+    <ClCompile Include="obfuscator\passes\mov.cpp">
+      <Filter>Header Files\obfuscator\passes</Filter>
+    </ClCompile>
+    <ClCompile Include="obfuscator\passes\add.cpp">
       <Filter>Header Files\obfuscator\passes</Filter>
     </ClCompile>
   </ItemGroup>

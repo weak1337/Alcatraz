@@ -7,16 +7,24 @@
 
 #pragma comment(lib, "dbghelp.lib")
 
-pdbparser::pdbparser(pe64* pe) {
+pdbparser::pdbparser(pe64* pe, std::string binary_path) {
 
 	if (!SymInitialize(GetCurrentProcess(), nullptr, false))
 		throw std::runtime_error("SymInitialize failed!");
 
 	auto debug_directory = pe->get_nt()->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].VirtualAddress;
 
+	std::string pdb_path = "";
 	if(!debug_directory)
-		throw std::runtime_error("no pdb path linked!");
-
+	{
+		std::filesystem::path ppdb_path = binary_path;
+		ppdb_path.replace_extension(".pdb");
+		pdb_path = ppdb_path.u8string();
+		if (!std::filesystem::exists(pdb_path))
+		{
+			throw std::runtime_error("No linked pdb file. Tried to find " + std::string(pdb_path.c_str()) + " without success");
+		}
+	}
 
 	for (auto current_debug_dir = reinterpret_cast<IMAGE_DEBUG_DIRECTORY*>(pe->get_buffer()->data() + debug_directory); current_debug_dir->SizeOfData; current_debug_dir++) {
 		
@@ -26,11 +34,22 @@ pdbparser::pdbparser(pe64* pe) {
 		auto codeview_info = 
 			reinterpret_cast<codeviewInfo_t*>(pe->get_buffer_not_relocated()->data() + current_debug_dir->PointerToRawData);
 
-		if(!std::filesystem::exists(codeview_info->PdbFileName))
-			throw std::runtime_error("couldn't find linked pdb file: " + std::string(codeview_info->PdbFileName));
+		std::string pdb_path = codeview_info->PdbFileName;
+		if (!std::filesystem::exists(codeview_info->PdbFileName))
+		{
+
+			std::filesystem::path ppdb_path = binary_path;
+			ppdb_path.replace_extension(".pdb");
+			pdb_path = ppdb_path.u8string();
+			if (!std::filesystem::exists(pdb_path))
+			{
+				throw std::runtime_error("Couldn't find linked pdb file. Tried to find " + std::string(pdb_path.c_str()) + " without success");
+			}
+
+		}
 
 		this->module_base = 
-			reinterpret_cast<uint8_t*>(SymLoadModuleEx(GetCurrentProcess(), 0, codeview_info->PdbFileName, 0, 0x10000000, static_cast<std::uint32_t>(std::filesystem::file_size(codeview_info->PdbFileName)), 0, 0));
+			reinterpret_cast<uint8_t*>(SymLoadModuleEx(GetCurrentProcess(), 0, pdb_path.c_str(), 0, 0x10000000, static_cast<std::uint32_t>(std::filesystem::file_size(pdb_path)), 0, 0));
 
 		if(!this->module_base)
 			throw std::runtime_error("SymLoadModuleEx failed!");

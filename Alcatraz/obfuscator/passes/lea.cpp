@@ -19,14 +19,11 @@ bool obfuscator::obfuscsate_lea(std::vector<obfuscator::function_t>::iterator& f
 			auto rand_add_val = distribution(generator);
 
 			instruction->location_of_data += rand_add_val;
-			JitRuntime rt;
-			CodeHolder code;
-			code.init(rt.environment());
-			x86::Assembler a(&code);
-
-			a.pushf();
-			a.sub(x86_register_map->second, rand_add_val);
-			a.popf();
+		
+			
+			assm.pushf();
+			assm.sub(x86_register_map->second, rand_add_val);
+			assm.popf();
 
 			void* fn;
 			auto err = rt.add(&fn, &code);
@@ -37,7 +34,9 @@ bool obfuscator::obfuscsate_lea(std::vector<obfuscator::function_t>::iterator& f
 				instruction = function->instructions.insert(instruction + 1, jit);
 			}
 
-			rt.release(fn);
+			code.reset();
+			code.init(rt.environment());
+			code.attach(&this->assm);	rt.release(fn);
 			break;
 			
 		}

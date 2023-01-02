@@ -4,6 +4,7 @@
 #include "../pdbparser/pdbparser.h"
 
 #include <string>
+#include <algorithm>
 #include <unordered_map>
 #include <asmjit/asmjit.h>
 using namespace asmjit;
@@ -16,6 +17,10 @@ private:
 	static int instruction_id;
 
 	static std::unordered_map<ZydisRegister_, x86::Gp>lookupmap;
+
+	JitRuntime rt;
+	CodeHolder code;
+	x86::Assembler assm;
 
 	struct instruction_t {
 
@@ -92,10 +97,10 @@ private:
 		These are our actual obfuscation passes
 	*/
 
-	bool obfuscate_constant(std::vector<obfuscator::function_t>::iterator& func_iter,std::vector<obfuscator::instruction_t>::iterator& instruction_iter);
 	bool obfuscsate_lea(std::vector<obfuscator::function_t>::iterator& func_iter, std::vector<obfuscator::instruction_t>::iterator& instruction_iter);
 	bool obfuscate_ff(std::vector<obfuscator::function_t>::iterator& func_iter, std::vector<obfuscator::instruction_t>::iterator& instruction_iter);
-
+	bool obfuscate_mov(std::vector<obfuscator::function_t>::iterator& func_iter, std::vector<obfuscator::instruction_t>::iterator& instruction_iter);
+	bool obfuscate_add(std::vector<obfuscator::function_t>::iterator& func_iter, std::vector<obfuscator::instruction_t>::iterator& instruction_iter);
 public:
 
 	obfuscator(pe64* pe);

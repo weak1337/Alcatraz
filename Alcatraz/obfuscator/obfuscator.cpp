@@ -30,7 +30,8 @@ void obfuscator::create_functions(std::vector<pdbparser::sym_func>functions) {
 
 	int function_iterator = 0;
 	for (auto function : functions) {
-
+		//if (function.name != "main")
+		//	continue;
 		if (std::find(visited_rvas.begin(), visited_rvas.end(), function.offset) != visited_rvas.end())
 			continue;
 		if (function.size < 5)
@@ -472,10 +473,16 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 
 	if (!this->analyze_functions())
 		throw std::runtime_error("couldn't analyze functions");
+
+
+	code.init(rt.environment());
+	code.attach(&this->assm);
+
 	printf("OBFUSCATING: %i\n", functions.size());
 	//Actual obfuscation passes
 	for (auto func = functions.begin(); func != functions.end(); func++) {
 		
+		//Obfuscate control flow
 		this->flatten_control_flow(func);
 
 		for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); instruction++) {
@@ -484,7 +491,11 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 			if (instruction->raw_bytes.data()[0] == 0xFF)
 				this->obfuscate_ff(func, instruction);
 
-			//Obfuscate lea
+			//Obfuscate ADD
+			if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_ADD)
+				this->obfuscate_add(func, instruction);
+
+			//Obfuscate LEA
 			if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_LEA && instruction->has_relative)
 				this->obfuscsate_lea(func, instruction);
 			
@@ -492,18 +503,19 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 			if (instruction->isjmpcall && instruction->relative.target_inst_id == -1)
 				this->obfuscate_iat_call(func, instruction);
 
-			if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_MOV) {
-				//Obfuscate immediate moves
-				if (instruction->zyinstr.operands[0].type == ZYDIS_OPERAND_TYPE_REGISTER && instruction->zyinstr.operands[1].type == ZYDIS_OPERAND_TYPE_IMMEDIATE) {
-					int randnum = rand() % 3 + 1;
-					int i = 0;
-					//while (this->obfuscate_constant(func, instruction) && i < randnum) {
-						//instruction -= 6;
-						//i++;
-					//}
-
+			//Obfuscate MOV
+			if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_MOV)
+			{
+				int randnum = rand() % 3 + 1;
+				int i = 0;
+				while (this->obfuscate_mov(func, instruction) && i < randnum) {
+					instruction -= 6;
+					i++;
 				}
 			}
+
+
+			
 		}
 	}
 	
