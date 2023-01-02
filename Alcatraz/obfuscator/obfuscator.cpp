@@ -30,8 +30,6 @@ void obfuscator::create_functions(std::vector<pdbparser::sym_func>functions) {
 
 	int function_iterator = 0;
 	for (auto function : functions) {
-		//if (function.name != "main")
-		//	continue;
 		if (std::find(visited_rvas.begin(), visited_rvas.end(), function.offset) != visited_rvas.end())
 			continue;
 		if (function.size < 5)
@@ -60,6 +58,34 @@ void obfuscator::create_functions(std::vector<pdbparser::sym_func>functions) {
 		this->functions.push_back(new_function);
 	}
 	
+}
+
+void obfuscator::add_custom_entry(PIMAGE_SECTION_HEADER new_section) {
+	
+
+
+	if (pe->get_path().find(".exe")) {
+
+		auto jit_instructions = this->instructions_from_jit(std::bit_cast<uint8_t*>(&obfuscator::custom_main), std::bit_cast<uint64_t>(&obfuscator::custom_main_end) - std::bit_cast<uint64_t>(&obfuscator::custom_main));
+
+		for (auto inst = jit_instructions.begin(); inst != jit_instructions.end(); ++inst) {
+
+			void* address = (void*)(pe->get_buffer()->data() + new_section->VirtualAddress + this->total_size_used);
+			inst->relocated_address = (uint64_t)address;
+			memcpy(address, inst->raw_bytes.data(), inst->zyinstr.length);
+			this->total_size_used += inst->zyinstr.length;
+
+		}
+		pe->get_nt()->OptionalHeader.AddressOfEntryPoint = jit_instructions.at(0).relocated_address - (uint64_t)pe->get_buffer()->data();
+	}
+	else if (pe->get_path().find(".dll")) {
+		throw std::runtime_error("File type not supported!\n");
+	}
+	else if (pe->get_path().find(".sys")) {
+		throw std::runtime_error("File type not supported!\n");
+	}
+	else
+		throw std::runtime_error("File type not supported!\n");
 }
 
 bool obfuscator::find_inst_at_dst(uint64_t dst, instruction_t** instptr, function_t** funcptr) {
@@ -149,7 +175,7 @@ bool obfuscator::analyze_functions() {
 
 void obfuscator::relocate(PIMAGE_SECTION_HEADER new_section) {
 
-	auto base = pe->get_buffer()->data();
+	auto base = pe->get_buffer()->data() + 0x1000;
 
 	int used_memory = 0;
 
@@ -168,7 +194,7 @@ void obfuscator::relocate(PIMAGE_SECTION_HEADER new_section) {
 		used_memory += instr_ctr;
 	}
 
-	this->total_size_used = used_memory;
+	this->total_size_used = used_memory + 0x1000;
 }
 
 bool obfuscator::find_instruction_by_id(int funcid, int instid, instruction_t* inst) {
@@ -474,19 +500,23 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 	if (!this->analyze_functions())
 		throw std::runtime_error("couldn't analyze functions");
 
+	*(uint32_t*)(pe->get_buffer()->data() + new_section->VirtualAddress) = pe->get_nt()->OptionalHeader.AddressOfEntryPoint;
 
 	code.init(rt.environment());
 	code.attach(&this->assm);
 
 	printf("OBFUSCATING: %i\n", functions.size());
+
 	//Actual obfuscation passes
+	
 	for (auto func = functions.begin(); func != functions.end(); func++) {
 		
 		//Obfuscate control flow
-		this->flatten_control_flow(func);
+		//this->flatten_control_flow(func);
 
 		for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); instruction++) {
 
+			/*
 			//Obfuscate 0xFF instructions to throw off disassemblers
 			if (instruction->raw_bytes.data()[0] == 0xFF)
 				this->obfuscate_ff(func, instruction);
@@ -512,10 +542,18 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 					instruction -= 6;
 					i++;
 				}
+			}	
+			*/
+			//Obfuscate MOV
+			if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_MOV)
+			{
+				int randnum = rand() % 3 + 1;
+				int i = 0;
+				while (this->obfuscate_mov(func, instruction) && i < randnum) {
+					instruction -= 6;
+					i++;
+				}
 			}
-
-
-			
 		}
 	}
 	
@@ -528,6 +566,7 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 		throw std::runtime_error("couldn't apply relocs");
 
 	this->compile(new_section);
+	//this->add_custom_entry(new_section);
 }
 
 uint32_t obfuscator::get_added_size() {

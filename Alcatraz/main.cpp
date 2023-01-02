@@ -11,14 +11,14 @@ int main() {
 		//"C:\\Users\\reale\\Desktop\\Klar.gg\\Hello\\x64\\Release\\hello.exe";
 		//"C:\\Users\\bsodcloud\\Desktop\\Klar.gg\\KlarNetworking - Kopie\\x64\\Release\\Klarclient.exe";
 		"C:\\Users\\bsodcloud\\Desktop\\projects\\pe_obf\\x64\\Release\\build.exe";
-
+		//"C:\\Users\\bsodcloud\\Desktop\\Klar.gg\\KlarPhysMapper\\x64\\Release\\KlarPhysMapper.sys";
 	const clock_t begin_time = clock();
 
 	try {
 		srand(time(NULL));
 
 		pe64 pe(binary_path);
-		pdbparser pdb(&pe, binary_path);
+		pdbparser pdb(&pe);
 	
 		auto functions = pdb.parse_functions();
 		std::cout << "Successfully parsed " << functions.size() << " function(s)" << std::endl;
@@ -30,8 +30,9 @@ int main() {
 		obf.run(new_section);
 	
 		auto extension = std::filesystem::path(binary_path).extension();
-		pe.save_to_disk(std::filesystem::path(binary_path).replace_extension().u8string() + ".obf" + extension.u8string(), new_section, obf.get_added_size());
+		pe.save_to_disk(std::filesystem::path(binary_path).replace_extension().string() + ".obf" + extension.string(), new_section, obf.get_added_size());
 			
+
 	}
 	catch (std::runtime_error e)
 	{

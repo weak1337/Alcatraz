@@ -8,7 +8,7 @@ private:
 
 	std::vector<uint8_t>buffer;
 	std::vector<uint8_t>buffer_not_relocated;
-
+	std::string path;
 
 public:
 
@@ -28,4 +28,5 @@ public:
 
 	void save_to_disk(std::string path, PIMAGE_SECTION_HEADER new_section, uint32_t total_size);
 
+	std::string get_path();
 };

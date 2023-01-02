@@ -6,6 +6,8 @@
 
 pe64::pe64(std::string binary_path) {
 
+	this->path = binary_path;
+
 	if (!std::filesystem::exists(binary_path))
 		throw std::runtime_error("binary path doesn't exist!");
 
@@ -135,4 +137,8 @@ void pe64::save_to_disk(std::string path, PIMAGE_SECTION_HEADER new_section, uin
 	}
 
 	file_stream.close();
+}
+
+std::string pe64::get_path() {
+	return this->path;
 }

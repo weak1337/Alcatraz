@@ -16,8 +16,6 @@ private:
 
 	uint8_t* module_base;
 
-	std::string binary_path;
-
 public:
 
 	struct sym_func {
@@ -26,7 +24,7 @@ public:
 		uint32_t size;
 	};
 
-	pdbparser(pe64* pe, std::string binary_path);
+	pdbparser(pe64* pe);
 	
 	~pdbparser();
 

@@ -7,10 +7,12 @@
 
 #pragma comment(lib, "dbghelp.lib")
 
-pdbparser::pdbparser(pe64* pe, std::string binary_path) {
+pdbparser::pdbparser(pe64* pe) {
 
 	if (!SymInitialize(GetCurrentProcess(), nullptr, false))
 		throw std::runtime_error("SymInitialize failed!");
+
+	std::string binary_path = pe->get_path();
 
 	auto debug_directory = pe->get_nt()->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].VirtualAddress;
 
@@ -19,7 +21,7 @@ pdbparser::pdbparser(pe64* pe, std::string binary_path) {
 	{
 		std::filesystem::path ppdb_path = binary_path;
 		ppdb_path.replace_extension(".pdb");
-		pdb_path = ppdb_path.u8string();
+		pdb_path = ppdb_path.string();
 		if (!std::filesystem::exists(pdb_path))
 		{
 			throw std::runtime_error("No linked pdb file. Tried to find " + std::string(pdb_path.c_str()) + " without success");
@@ -40,7 +42,7 @@ pdbparser::pdbparser(pe64* pe, std::string binary_path) {
 
 			std::filesystem::path ppdb_path = binary_path;
 			ppdb_path.replace_extension(".pdb");
-			pdb_path = ppdb_path.u8string();
+			pdb_path = ppdb_path.string();
 			if (!std::filesystem::exists(pdb_path))
 			{
 				throw std::runtime_error("Couldn't find linked pdb file. Tried to find " + std::string(pdb_path.c_str()) + " without success");

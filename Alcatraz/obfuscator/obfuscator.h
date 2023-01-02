@@ -66,6 +66,8 @@ private:
 
 	uint32_t total_size_used;
 
+	void add_custom_entry(PIMAGE_SECTION_HEADER new_section);
+
 	bool find_inst_at_dst(uint64_t dst, instruction_t** instptr, function_t** funcptr);
 
 	void remove_jumptables();
@@ -92,6 +94,9 @@ private:
 
 	bool flatten_control_flow(std::vector<obfuscator::function_t>::iterator& func_iter);
 	bool obfuscate_iat_call(std::vector<obfuscator::function_t>::iterator& func_iter, std::vector<obfuscator::instruction_t>::iterator& instruction_iter);
+
+	__declspec(safebuffers)  int custom_dll_main(HINSTANCE instance, DWORD fdwreason, LPVOID reserved); void custom_dll_main_end();
+	__declspec(safebuffers)  int custom_main(int argc, char* argv[]); void custom_main_end();
 
 	/*
 		These are our actual obfuscation passes

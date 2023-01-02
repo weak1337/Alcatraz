@@ -60,6 +60,9 @@
     <ClCompile Include="obfuscator\passes\add.cpp">
       <Filter>Header Files\obfuscator\passes</Filter>
     </ClCompile>
+    <ClCompile Include="obfuscator\misc\custom_entry.cpp">
+      <Filter>Header Files\obfuscator\misc</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pe\pe.h">

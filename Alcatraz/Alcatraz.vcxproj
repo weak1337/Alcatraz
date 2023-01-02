@@ -120,7 +120,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -132,6 +132,7 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="obfuscator\misc\cfflattener.cpp" />
+    <ClCompile Include="obfuscator\misc\custom_entry.cpp" />
     <ClCompile Include="obfuscator\misc\iat.cpp" />
     <ClCompile Include="obfuscator\obfuscator.cpp" />
     <ClCompile Include="obfuscator\passes\add.cpp" />
