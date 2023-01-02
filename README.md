@@ -4,6 +4,7 @@ Alcatraz is a x64 binary obfuscator that is able to obfuscate various different 
 - .dll
 - .sys
 ## Features
+In the following showcase all features (besides the one that it showcases) are disabled.
 ### Obfuscation of immediates
 If an immediate value is moved into a register, we obfuscate it by applying multiple bitwise operations. Let's take a look at the popular function `_security_init_cookie`.
 Before:
