@@ -94,6 +94,7 @@ private:
 
 	bool obfuscate_constant(std::vector<obfuscator::function_t>::iterator& func_iter,std::vector<obfuscator::instruction_t>::iterator& instruction_iter);
 	bool obfuscsate_lea(std::vector<obfuscator::function_t>::iterator& func_iter, std::vector<obfuscator::instruction_t>::iterator& instruction_iter);
+	bool obfuscate_ff(std::vector<obfuscator::function_t>::iterator& func_iter, std::vector<obfuscator::instruction_t>::iterator& instruction_iter);
 
 public:
 

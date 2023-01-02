@@ -54,6 +54,9 @@
     <ClCompile Include="obfuscator\misc\iat.cpp">
       <Filter>Header Files\obfuscator\misc</Filter>
     </ClCompile>
+    <ClCompile Include="obfuscator\passes\ff.cpp">
+      <Filter>Header Files\obfuscator\passes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pe\pe.h">
