@@ -482,7 +482,7 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 
 			//Obfuscate lea
 			if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_LEA && instruction->has_relative) {
-				this->obfuscsate_lea(func, instruction);
+				//this->obfuscsate_lea(func, instruction);
 			}
 
 		//	if (instruction->isjmpcall && instruction->relative.target_inst_id == -1)
@@ -493,10 +493,10 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 				if (instruction->zyinstr.operands[0].type == ZYDIS_OPERAND_TYPE_REGISTER && instruction->zyinstr.operands[1].type == ZYDIS_OPERAND_TYPE_IMMEDIATE) {
 					int randnum = rand() % 3 + 1;
 					int i = 0;
-					while (this->obfuscate_constant(func, instruction) && i < randnum) {
-						instruction -= 6;
-						i++;
-					}
+				//	while (this->obfuscate_constant(func, instruction) && i < randnum) {
+					//	instruction -= 6;
+					//	i++;
+					//}
 
 				
 				}
