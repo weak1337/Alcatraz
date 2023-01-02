@@ -9,7 +9,9 @@ int main() {
 	std::string binary_path = 
 	//	"C:\\Users\\reale\\Desktop\\Alcatraz\\x64\\Release\\Alcatraz.exe";
 		//"C:\\Users\\reale\\Desktop\\Klar.gg\\Hello\\x64\\Release\\hello.exe";
-		"C:\\Users\\reale\\Desktop\\Klar.gg\\KlarNetworking - Kopie\\x64\\Release\\Klarclient.exe";
+		"C:\\Users\\bsodcloud\\Desktop\\Klar.gg\\KlarNetworking - Kopie\\x64\\Release\\Klarclient.exe";
+
+	const clock_t begin_time = clock();
 
 	try {
 		srand(time(NULL));
@@ -34,6 +36,7 @@ int main() {
 		std::cout << "Runtime error: " << e.what() << std::endl;
 	}
 
-	std::cout << "Finished" << std::endl;
+	auto t_end = std::chrono::high_resolution_clock::now();
+	std::cout << "Finished in " << float(clock() - begin_time) / CLOCKS_PER_SEC << " seconds" << std::endl;
 	return getchar();
 }

@@ -349,7 +349,7 @@ bool obfuscator::apply_relocations(PIMAGE_SECTION_HEADER new_section) {
 			if (instruction->has_relative) {
 
 				if (instruction->isjmpcall) {
-
+					
 					if (instruction->relative.target_inst_id == -1) { //Points without relocation
 
 						switch (instruction->relative.size) {
@@ -375,12 +375,12 @@ bool obfuscator::apply_relocations(PIMAGE_SECTION_HEADER new_section) {
 						memcpy((void*)instruction->relocated_address, instruction->raw_bytes.data(), instruction->zyinstr.length);
 					}
 					else {
-
+						
 						instruction_t inst;
 						if (!this->find_instruction_by_id(instruction->relative.target_func_id, instruction->relative.target_inst_id, &inst)) {
 							return false;
 						}
-
+		
 						switch (instruction->relative.size) {
 						case 8: {
 							*(int8_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int8_t)(inst.relocated_address - instruction->relocated_address - instruction->zyinstr.length);
@@ -476,27 +476,27 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 	//Actual obfuscation passes
 	for (auto func = functions.begin(); func != functions.end(); func++) {
 		
-		//this->flatten_control_flow(func);
+		this->flatten_control_flow(func);
 
 		for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); instruction++) {
 
 			//Obfuscate lea
 			if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_LEA && instruction->has_relative) {
-			//	this->obfuscsate_lea(func, instruction);
+				this->obfuscsate_lea(func, instruction);
 			}
 
-			if (instruction->isjmpcall && instruction->relative.target_inst_id == -1)
-				this->obfuscate_iat_call(func, instruction);
+		//	if (instruction->isjmpcall && instruction->relative.target_inst_id == -1)
+				//this->obfuscate_iat_call(func, instruction);
 
 			if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_MOV) {
 				//Obfuscate constant values
 				if (instruction->zyinstr.operands[0].type == ZYDIS_OPERAND_TYPE_REGISTER && instruction->zyinstr.operands[1].type == ZYDIS_OPERAND_TYPE_IMMEDIATE) {
-					int randnum = rand() % 5 + 1;
+					int randnum = rand() % 3 + 1;
 					int i = 0;
-				//	while (this->obfuscate_constant(func, instruction) && i < randnum) {
-					//	instruction -= 6;
-					//	i++;
-				//	}
+					while (this->obfuscate_constant(func, instruction) && i < randnum) {
+						instruction -= 6;
+						i++;
+					}
 
 				
 				}
