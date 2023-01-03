@@ -462,6 +462,7 @@ bool obfuscator::apply_relocations(PIMAGE_SECTION_HEADER new_section) {
 		}
 	}
 
+	return true;
 }
 
 void obfuscator::compile(PIMAGE_SECTION_HEADER new_section) {
@@ -518,8 +519,8 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 		//this->flatten_control_flow(func);
 		
 		for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); instruction++) {
-			if (instruction->raw_bytes.data()[0] == 0xFF)
-				this->obfuscate_ff(func, instruction);
+	
+
 			/*
 			//Obfuscate IAT
 			if (instruction->isjmpcall && instruction->relative.target_inst_id == -1)
@@ -549,6 +550,16 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 				}
 			}	
 			*/
+
+			int randval = rand() % 20 + 1;
+			this->add_junk(func, instruction);
+			if (randval == 1) {
+
+			}
+			else if (randval == 2) {
+
+			}
+
 		}
 		
 	}

@@ -136,7 +136,7 @@
     <ClCompile Include="obfuscator\misc\iat.cpp" />
     <ClCompile Include="obfuscator\obfuscator.cpp" />
     <ClCompile Include="obfuscator\passes\add.cpp" />
-    <ClCompile Include="obfuscator\passes\ff.cpp" />
+    <ClCompile Include="obfuscator\passes\antidisassembly.cpp" />
     <ClCompile Include="obfuscator\passes\lea.cpp" />
     <ClCompile Include="obfuscator\passes\mov.cpp" />
     <ClCompile Include="pdbparser\pdbparser.cpp" />

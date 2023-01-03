@@ -51,7 +51,7 @@
     <ClCompile Include="obfuscator\misc\iat.cpp">
       <Filter>Header Files\obfuscator\misc</Filter>
     </ClCompile>
-    <ClCompile Include="obfuscator\passes\ff.cpp">
+    <ClCompile Include="obfuscator\passes\antidisassembly.cpp">
       <Filter>Header Files\obfuscator\passes</Filter>
     </ClCompile>
     <ClCompile Include="obfuscator\passes\mov.cpp">

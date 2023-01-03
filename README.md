@@ -63,15 +63,22 @@ rcx -> 0xDEAD
 ```
 ### Anti disassembly
 If we find an instruction that starts with the byte 0xFF we will put a 0xEB infront of it.  
-We do this 0xEB 0xFF encodes to jmp rip + 1 which ultimately jumps to our actual first 0xFF. This will throw off tools that decode instructions in a linear way.  
+We do this because 0xEB 0xFF encodes to jmp rip + 1 which ultimately jumps to our actual first 0xFF. This will throw off tools that decode instructions in a linear way.  
 Before:  
 ![imgffbefore](images/ffbefore.PNG)  
 After:  
 ![imgffafter](images/ffafter.PNG)  
+  
+  
+From time to time we can insert:  
+```asm
+jz 3
+jne 1
+0xE8
+```
+IDA will try to decode the 0xE8 (call) but won't have any success:  
+![imgjz](images/jzobf.PNG)  
+
 ### Import obfuscation
 There is no "proper" IAT obfuscation at the moment. The 0xFF anti disassembly trick takes care of it for now. Proper implementation is planned here:  
 [iat.cpp](Alcatraz/obfuscator/misc/iat.cpp)
-### Opaque predicates
-balbalbalba
-### Mixed boolean arithmetic
-balbalbalba
