@@ -38,7 +38,7 @@ As you can see, the complexity increased by a lot even though I only show a smal
 ### ADD mutation
 If a register (eg. RAX) is added to another register (eg. RCX) we will mutate the instruction. This means that the syntax changes but not the semantic.
 The instruction `ADD RCX, RAX` can be mutated to:  
-```
+```asm
 push rax
 not rax
 sub rcx, rax
