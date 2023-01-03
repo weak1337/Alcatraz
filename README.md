@@ -4,7 +4,7 @@ Alcatraz is a x64 binary obfuscator that is able to obfuscate various different 
 - .dll
 - .sys
 
-#Overview
+# Overview
 [TOC]
 
 # Features
