@@ -27,7 +27,7 @@ Before:
 After:
 ![imgafter](images/const_after.PNG)
 ### Control flow flattening
-By removing the tidy program structure the compiler generated and putting our code into new generated blocks, we increase the complexity of the program. Lets take this simple function `main` as example:  
+By removing the tidy program structure the compiler generated and putting our code into new generated blocks, we increase the complexity of the program. Lets take this simple function `main` as example (optimization for this program is disabled):  
 ![imgmain](images/flatten_function.PNG)  
 If we throw this into IDA 7.6 the decompiler will optimize it:  
 ![imgmainnoobf](images/flatten_func_noobf.PNG)  
@@ -49,10 +49,12 @@ If you want to learn more about mutation take a look at [perses](https://github.
 ### Entrypoint obfuscation
 If the PE file is a .exe (.dll support will be added) we will create a custom entrypoint that decrypts the real one on startup (!!! doesn't work when beeing manual mapped).  
 ![imgmaincfg](images/customentry.PNG)  
+### Lea obfuscation
+The lea obfuscation is quite simple yet effective. We move a different location into the register and decrypt it afterwards. This way, reverse engineers can't cross reference certain data / functions.
 ### Anti disassembly
 balbalbalba
 ### Import obfuscation
-There is no "proper" IAT obfuscation at the moment. The 0xFF anti disassembly trick takes care of it at the moment. Proper implementation is planned here:  
+There is no "proper" IAT obfuscation at the moment. The 0xFF anti disassembly trick takes care of it for now. Proper implementation is planned here:  
 [iat.cpp](Alcatraz/obfuscator/misc/iat.cpp)
 ### Opaque predicates
 balbalbalba
