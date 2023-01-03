@@ -14,7 +14,7 @@ After:
 ### Control flow flattening
 By removing the tidy program structure the compiler generated and putting our code into new generated blocks, we increase the complexity of the program. Lets take this simple function `main` as example:  
 ![imgmain](images/flatten_function.PNG)
-If we throw this into IDA 7.6 the decompiler will optimize it:  
+If we throw this into IDA 7.6 the decompiler will optimize it:    
 ![imgmain](images/flatten_func_noobf.PNG)
 Now let's flatten its control flow and let IDA analyze it again:  
 ![imgmain](images/flatten_func_obf.PNG)
