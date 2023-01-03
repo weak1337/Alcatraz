@@ -14,7 +14,7 @@ Alcatraz is a x64 binary obfuscator that is able to obfuscate various different 
     + [Lea obfuscation](#lea-obfuscation)
     + [Anti disassembly](#anti-disassembly)
     + [Import obfuscation](#import-obfuscation)
-
+	+ [Final result](#final-result)
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
 # Features
@@ -82,6 +82,6 @@ IDA will try to decode the 0xE8 (call) but won't have any success:
 There is no "proper" IAT obfuscation at the moment. The 0xFF anti disassembly trick takes care of it for now. Proper implementation is planned here:  
 [iat.cpp](Alcatraz/obfuscator/misc/iat.cpp)
 
-###Final result
+### Final result
 This is a snippet of our `main` function with everything except anti disassembly enabled (so IDA can create a function):  
 ![imgfinal](images/final.PNG)  
