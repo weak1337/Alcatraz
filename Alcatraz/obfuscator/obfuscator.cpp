@@ -518,7 +518,8 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 		//this->flatten_control_flow(func);
 		
 		for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); instruction++) {
-
+			if (instruction->raw_bytes.data()[0] == 0xFF)
+				this->obfuscate_ff(func, instruction);
 			/*
 			//Obfuscate IAT
 			if (instruction->isjmpcall && instruction->relative.target_inst_id == -1)
@@ -536,7 +537,7 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 			//Obfuscate LEA
 			if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_LEA && instruction->has_relative)
 				this->obfuscsate_lea(func, instruction);
-				*/
+				
 			//Obfuscate MOV
 			if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_MOV)
 			{
@@ -547,7 +548,7 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 					i++;
 				}
 			}	
-			
+			*/
 		}
 		
 	}
