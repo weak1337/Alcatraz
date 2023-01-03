@@ -15,6 +15,7 @@ private:
 	pe64* pe;
 
 	static int instruction_id;
+	static int function_iterator;
 
 	static std::unordered_map<ZydisRegister_, x86::Gp>lookupmap;
 

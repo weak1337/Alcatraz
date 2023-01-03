@@ -8,9 +8,9 @@
 int main() {
 	std::string binary_path = 
 	//	"C:\\Users\\reale\\Desktop\\Alcatraz\\x64\\Release\\Alcatraz.exe";
-		//"C:\\Users\\reale\\Desktop\\Klar.gg\\Hello\\x64\\Release\\hello.exe";
+		"C:\\Users\\bsodcloud\\Desktop\\Klar.gg\\Hello\\x64\\Release\\hello.exe";
 		//"C:\\Users\\bsodcloud\\Desktop\\Klar.gg\\KlarNetworking - Kopie\\x64\\Release\\Klarclient.exe";
-		"C:\\Users\\bsodcloud\\Desktop\\projects\\pe_obf\\x64\\Release\\build.exe";
+		//"C:\\Users\\bsodcloud\\Desktop\\projects\\pe_obf\\x64\\Release\\build.exe";
 		//"C:\\Users\\bsodcloud\\Desktop\\Klar.gg\\KlarPhysMapper\\x64\\Release\\KlarPhysMapper.sys";
 	const clock_t begin_time = clock();
 

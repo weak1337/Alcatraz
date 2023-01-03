@@ -5,7 +5,8 @@
 ZydisFormatter formatter;
 ZydisDecoder decoder;
 
-int obfuscator::instruction_id;
+int obfuscator::instruction_id = 0;
+int obfuscator::function_iterator = 0;
 
 obfuscator::obfuscator(pe64* pe) {
 
@@ -28,7 +29,6 @@ void obfuscator::create_functions(std::vector<pdbparser::sym_func>functions) {
 
 	std::vector<uint32_t>visited_rvas;
 
-	int function_iterator = 0;
 	for (auto function : functions) {
 		if (std::find(visited_rvas.begin(), visited_rvas.end(), function.offset) != visited_rvas.end())
 			continue;
@@ -151,7 +151,7 @@ bool obfuscator::analyze_functions() {
 				}
 				else {
 
-					uint64_t original_data = instruction->runtime_address + instruction->zyinstr.length;;
+					uint64_t original_data = instruction->runtime_address + instruction->zyinstr.length;
 					
 					switch(instruction->relative.size){
 					case 8:
@@ -480,17 +480,19 @@ void obfuscator::compile(PIMAGE_SECTION_HEADER new_section) {
 
 		const uint8_t jmp_shell[] = { 0xE9, 0x00, 0x00, 0x00, 0x00 };
 
-		uint32_t src = text_section->VirtualAddress + func->offset;
-		uint32_t dst = first_instruction->relocated_address - (uint64_t)pe->get_buffer()->data();
+		if (func->offset != -1) {
+			uint32_t src = text_section->VirtualAddress + func->offset;
+			uint32_t dst = first_instruction->relocated_address - (uint64_t)pe->get_buffer()->data();
 
 
-		*(int32_t*)&jmp_shell[1] = (signed int)(dst - src - sizeof(jmp_shell));
+			*(int32_t*)&jmp_shell[1] = (signed int)(dst - src - sizeof(jmp_shell));
 
-		for (int i = 0; i < func->size - 5; i++) {
-			*(uint8_t*)((uint64_t)base + src + 5 + i) = rand() % 255 + 1;
-		}
+			for (int i = 0; i < func->size - 5; i++) {
+				*(uint8_t*)((uint64_t)base + src + 5 + i) = rand() % 255 + 1;
+			}
 
-		memcpy((void*)(base + src), jmp_shell, sizeof(jmp_shell));
+			memcpy((void*)(base + src), jmp_shell, sizeof(jmp_shell));
+		}	
 	}
 
 }
@@ -500,10 +502,11 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 	if (!this->analyze_functions())
 		throw std::runtime_error("couldn't analyze functions");
 
-	*(uint32_t*)(pe->get_buffer()->data() + new_section->VirtualAddress) = pe->get_nt()->OptionalHeader.AddressOfEntryPoint;
+	*(uint32_t*)(pe->get_buffer()->data() + new_section->VirtualAddress) = _rotl(pe->get_nt()->OptionalHeader.AddressOfEntryPoint, pe->get_nt()->FileHeader.TimeDateStamp)^ pe->get_nt()->OptionalHeader.SizeOfStackCommit;
 
 	code.init(rt.environment());
 	code.attach(&this->assm);
+
 
 	printf("OBFUSCATING: %i\n", functions.size());
 
@@ -512,11 +515,15 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 	for (auto func = functions.begin(); func != functions.end(); func++) {
 		
 		//Obfuscate control flow
-		//this->flatten_control_flow(func);
-
+		this->flatten_control_flow(func);
+		/*
 		for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); instruction++) {
 
-			/*
+			//Obfuscate IAT
+			if (instruction->isjmpcall && instruction->relative.target_inst_id == -1)
+				this->obfuscate_iat_call(func, instruction);
+
+			
 			//Obfuscate 0xFF instructions to throw off disassemblers
 			if (instruction->raw_bytes.data()[0] == 0xFF)
 				this->obfuscate_ff(func, instruction);
@@ -528,10 +535,6 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 			//Obfuscate LEA
 			if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_LEA && instruction->has_relative)
 				this->obfuscsate_lea(func, instruction);
-			
-			//Obfuscate IAT
-			if (instruction->isjmpcall && instruction->relative.target_inst_id == -1)
-				this->obfuscate_iat_call(func, instruction);
 
 			//Obfuscate MOV
 			if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_MOV)
@@ -543,18 +546,9 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 					i++;
 				}
 			}	
-			*/
-			//Obfuscate MOV
-			if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_MOV)
-			{
-				int randnum = rand() % 3 + 1;
-				int i = 0;
-				while (this->obfuscate_mov(func, instruction) && i < randnum) {
-					instruction -= 6;
-					i++;
-				}
-			}
+			
 		}
+		*/
 	}
 	
 	this->relocate(new_section);
@@ -566,7 +560,7 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 		throw std::runtime_error("couldn't apply relocs");
 
 	this->compile(new_section);
-	//this->add_custom_entry(new_section);
+	this->add_custom_entry(new_section);
 }
 
 uint32_t obfuscator::get_added_size() {

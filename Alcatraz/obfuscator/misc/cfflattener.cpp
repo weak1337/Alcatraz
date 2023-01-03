@@ -1,5 +1,7 @@
 #include "../obfuscator.h"
 
+#include <random>
+
 bool is_jmp_conditional(ZydisDecodedInstruction instr) {
 	switch (instr.mnemonic)
 	{
@@ -31,9 +33,11 @@ bool is_jmp_conditional(ZydisDecodedInstruction instr) {
 	return false;
 }
 
+
+
 bool obfuscator::flatten_control_flow(std::vector<obfuscator::function_t>::iterator& func){
 
-	struct block {
+	struct block_t {
 		int block_id;
 		std::vector < obfuscator::instruction_t>instructions;
 
@@ -42,9 +46,9 @@ bool obfuscator::flatten_control_flow(std::vector<obfuscator::function_t>::itera
 
 	};
 
-	std::vector<block>blocks;
+	std::vector<block_t>blocks;
 	std::vector<int>block_starts;
-	block block;
+	block_t block;
 	int block_iterator = 0;
 
 	//In the first round we mark all jmp destinations that land back inside this func
@@ -112,8 +116,13 @@ bool obfuscator::flatten_control_flow(std::vector<obfuscator::function_t>::itera
 	int new_id = this->instruction_id++;
 	func->instructions.begin()->inst_id = new_id;
 	func->instructions.begin()->is_first_instruction = false;
-	//Generate our control structure
 
+
+	//Lets shuffle so they cant just strip our stuff
+	auto rng = std::default_random_engine{};
+	std::shuffle(blocks.begin(), blocks.end(), rng);
+
+	//Generate our control structure
 	instruction_t push_rax{}; push_rax.load(func->func_id, { 0x50 });
 	push_rax.inst_id = first_inst_id;
 	push_rax.is_first_instruction = false;
@@ -162,11 +171,11 @@ bool obfuscator::flatten_control_flow(std::vector<obfuscator::function_t>::itera
 			return it.inst_id == (current_block->instructions.end() - 1)->inst_id;
 			});
 
-		auto next_block = &blocks.at(current_block->next_block);
+		auto next_block = std::find_if(blocks.begin(), blocks.end(), [&](const block_t block) {return block.block_id == current_block->next_block; });
 
 		if (is_jmp_conditional(last_instruction->zyinstr) && current_block->dst_block != -1) {
 
-			auto dst_block = &blocks.at(current_block->dst_block);
+			auto dst_block = std::find_if(blocks.begin(), blocks.end(), [&](const block_t block) {return block.block_id == current_block->dst_block; });
 
 			//This happens if condition is not met
 			{
