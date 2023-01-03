@@ -50,7 +50,17 @@ If you want to learn more about mutation take a look at [perses](https://github.
 If the PE file is a .exe (.dll support will be added) we will create a custom entrypoint that decrypts the real one on startup (!!! doesn't work when beeing manual mapped).  
 ![imgmaincfg](images/customentry.PNG)  
 ### Lea obfuscation
-The lea obfuscation is quite simple yet effective. We move a different location into the register and decrypt it afterwards. This way, reverse engineers can't cross reference certain data / functions.
+The lea obfuscation is quite simple yet effective. We move a different location into the register and decrypt it afterwards. This way, reverse engineers can't cross reference certain data / functions.  
+Let's say we find the following instruction: `lea rcx, [0xDEAD]`  
+We will mutate it to:
+```asm
+pushf
+lea rcx, [1CE54]
+sub rcx, EFA7
+popf
+
+rcx -> 0xDEAD
+```
 ### Anti disassembly
 balbalbalba
 ### Import obfuscation
