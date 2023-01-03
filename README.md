@@ -45,6 +45,9 @@ sub rcx, rax
 pop rax
 sub rcx, 1
 ```
+### Entrypoint obfuscation
+If the PE file is a .dll or .exe we will create a custom entrypoint that decrypts the real one on startup.  
+![imgmaincfg](images/customentry.PNG)  
 ### Anti disassembly
 balbalbalba
 ### Import obfuscation
