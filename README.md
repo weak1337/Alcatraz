@@ -45,13 +45,15 @@ sub rcx, rax
 pop rax
 sub rcx, 1
 ```
+If you want to learn more about mutation take a look at [perses](https://github.com/mike1k/perses).
 ### Entrypoint obfuscation
-If the PE file is a .dll or .exe we will create a custom entrypoint that decrypts the real one on startup.  
+If the PE file is a .exe (.dll support will be added) we will create a custom entrypoint that decrypts the real one on startup (!!! doesn't work when beeing manual mapped).  
 ![imgmaincfg](images/customentry.PNG)  
 ### Anti disassembly
 balbalbalba
 ### Import obfuscation
-balbalbalba
+There is no "proper" IAT obfuscation at the moment. The 0xFF anti disassembly trick takes care of it at the moment. Proper implementation is planned here:  
+[iat.cpp](Alcatraz/obfuscator/misc/iat.cpp)
 ### Opaque predicates
 balbalbalba
 ### Mixed boolean arithmetic
