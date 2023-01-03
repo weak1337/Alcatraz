@@ -20,8 +20,6 @@ bool obfuscator::add_junk(std::vector<obfuscator::function_t>::iterator& functio
 	instruction = function->instructions.insert(instruction + 1, jnz);
 	instruction = function->instructions.insert(instruction + 1, garbage);
 
-	printf("%i %i %x\n", (instruction - 1)->isjmpcall, (instruction - 2)->isjmpcall, *(BYTE*)&instruction->raw_bytes.data()[0]);
-
 	(instruction - 2)->relative.target_func_id = function->func_id;
 	(instruction - 1)->relative.target_func_id = function->func_id;
 

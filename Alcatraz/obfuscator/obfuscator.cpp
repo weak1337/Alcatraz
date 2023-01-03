@@ -516,20 +516,20 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 	for (auto func = functions.begin(); func != functions.end(); func++) {
 		
 		//Obfuscate control flow
-		//this->flatten_control_flow(func);
+		this->flatten_control_flow(func);
 		
 		for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); instruction++) {
 	
 
-			/*
+			
 			//Obfuscate IAT
 			if (instruction->isjmpcall && instruction->relative.target_inst_id == -1)
 				this->obfuscate_iat_call(func, instruction);
 
 			
 			//Obfuscate 0xFF instructions to throw off disassemblers
-			if (instruction->raw_bytes.data()[0] == 0xFF)
-				this->obfuscate_ff(func, instruction);
+			//if (instruction->raw_bytes.data()[0] == 0xFF)
+				//this->obfuscate_ff(func, instruction);
 
 			//Obfuscate ADD
 			if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_ADD)
@@ -549,17 +549,12 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 					i++;
 				}
 			}	
-			*/
-
+			
 			int randval = rand() % 20 + 1;
-			this->add_junk(func, instruction);
+			
 			if (randval == 1) {
-
+				//this->add_junk(func, instruction);
 			}
-			else if (randval == 2) {
-
-			}
-
 		}
 		
 	}
