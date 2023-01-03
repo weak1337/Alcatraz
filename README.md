@@ -5,7 +5,18 @@ Alcatraz is a x64 binary obfuscator that is able to obfuscate various different 
 - .sys
 
 # Overview
-[TOC]
+- [Alcatraz](#alcatraz)
+- [Features](#features)
+    + [Obfuscation of immediate moves](#obfuscation-of-immediate-moves)
+    + [Control flow flattening](#control-flow-flattening)
+    + [ADD mutation](#add-mutation)
+    + [Anti disassembly](#anti-disassembly)
+    + [Import obfuscation](#import-obfuscation)
+    + [Opaque predicates](#opaque-predicates)
+    + [Mixed boolean arithmetic](#mixed-boolean-arithmetic)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
 
 # Features
 In the following showcase all features (besides the one being showcased) are disabled.
