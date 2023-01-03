@@ -18,6 +18,8 @@ If we throw this into IDA 7.6 the decompiler will optimize it:
 ![imgmainnoobf](images/flatten_func_noobf.PNG)  
 Now let's flatten its control flow and let IDA analyze it again:  
 ![imgmainobf](images/flatten_func_obf.PNG)  
+As you can see, the complexity increased by a lot. If you want to know what the cfg looks like take a look:
+![imgmaincfg](images/flatten_func_cfg.PNG)  
 ### Anti disassembly
 balbalbalba
 ### Import obfuscation
