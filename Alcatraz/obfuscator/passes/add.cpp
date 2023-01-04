@@ -4,13 +4,16 @@ bool obfuscator::obfuscate_add(std::vector<obfuscator::function_t>::iterator& fu
 	
 	if (instruction->zyinstr.operands[0].type == ZYDIS_OPERAND_TYPE_REGISTER && instruction->zyinstr.operands[1].type == ZYDIS_OPERAND_TYPE_REGISTER) {
 
+		if (instruction->zyinstr.operands[0].size < 32)
+			return true;
+
 		auto first = lookupmap.find(instruction->zyinstr.operands[0].reg.value)->second;
 		auto second = lookupmap.find(instruction->zyinstr.operands[1].reg.value)->second;
 
 		if (first == second)
 			return true;
 
-		if (first == x86::rsp)
+		if (first == x86::rsp || second == x86::rsp)
 			return true;
 
 		if (first.size() != second.size())
@@ -37,6 +40,7 @@ bool obfuscator::obfuscate_add(std::vector<obfuscator::function_t>::iterator& fu
 		code.reset();
 		code.init(rt.environment());
 		code.attach(&this->assm);
+		
 		
 	}
 

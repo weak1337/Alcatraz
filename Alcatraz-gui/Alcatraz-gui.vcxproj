@@ -21,10 +21,9 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{3bf811ef-13b1-4b79-b957-6a5c1f9301bc}</ProjectGuid>
-    <RootNamespace>Alcatraz</RootNamespace>
+    <ProjectGuid>{5100ef39-aea3-40ed-9d16-86c881661bb8}</ProjectGuid>
+    <RootNamespace>Alcatrazgui</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>Alcatraz-con</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -105,8 +104,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
-      <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -132,22 +129,41 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Alcatraz\obfuscator\misc\cfflattener.cpp" />
+    <ClCompile Include="..\Alcatraz\obfuscator\misc\custom_entry.cpp" />
+    <ClCompile Include="..\Alcatraz\obfuscator\misc\iat.cpp" />
+    <ClCompile Include="..\Alcatraz\obfuscator\obfuscator.cpp" />
+    <ClCompile Include="..\Alcatraz\obfuscator\passes\add.cpp" />
+    <ClCompile Include="..\Alcatraz\obfuscator\passes\antidisassembly.cpp" />
+    <ClCompile Include="..\Alcatraz\obfuscator\passes\lea.cpp" />
+    <ClCompile Include="..\Alcatraz\obfuscator\passes\mov.cpp" />
+    <ClCompile Include="..\Alcatraz\pdbparser\pdbparser.cpp" />
+    <ClCompile Include="..\Alcatraz\pe\pe.cpp" />
+    <ClCompile Include="gui\gui.cpp" />
+    <ClCompile Include="gui\imgui\imgui.cpp" />
+    <ClCompile Include="gui\imgui\imgui_demo.cpp" />
+    <ClCompile Include="gui\imgui\imgui_draw.cpp" />
+    <ClCompile Include="gui\imgui\imgui_impl_dx11.cpp" />
+    <ClCompile Include="gui\imgui\imgui_impl_win32.cpp" />
+    <ClCompile Include="gui\imgui\imgui_tables.cpp" />
+    <ClCompile Include="gui\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="interface\interface.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="obfuscator\misc\cfflattener.cpp" />
-    <ClCompile Include="obfuscator\misc\custom_entry.cpp" />
-    <ClCompile Include="obfuscator\misc\iat.cpp" />
-    <ClCompile Include="obfuscator\obfuscator.cpp" />
-    <ClCompile Include="obfuscator\passes\add.cpp" />
-    <ClCompile Include="obfuscator\passes\antidisassembly.cpp" />
-    <ClCompile Include="obfuscator\passes\lea.cpp" />
-    <ClCompile Include="obfuscator\passes\mov.cpp" />
-    <ClCompile Include="pdbparser\pdbparser.cpp" />
-    <ClCompile Include="pe\pe.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="obfuscator\obfuscator.h" />
-    <ClInclude Include="pdbparser\pdbparser.h" />
-    <ClInclude Include="pe\pe.h" />
+    <ClInclude Include="..\Alcatraz\obfuscator\obfuscator.h" />
+    <ClInclude Include="..\Alcatraz\pdbparser\pdbparser.h" />
+    <ClInclude Include="..\Alcatraz\pe\pe.h" />
+    <ClInclude Include="gui\gui.h" />
+    <ClInclude Include="gui\imgui\imconfig.h" />
+    <ClInclude Include="gui\imgui\imgui.h" />
+    <ClInclude Include="gui\imgui\imgui_impl_dx11.h" />
+    <ClInclude Include="gui\imgui\imgui_impl_win32.h" />
+    <ClInclude Include="gui\imgui\imgui_internal.h" />
+    <ClInclude Include="gui\imgui\imstb_rectpack.h" />
+    <ClInclude Include="gui\imgui\imstb_textedit.h" />
+    <ClInclude Include="gui\imgui\imstb_truetype.h" />
+    <ClInclude Include="interface\interface.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

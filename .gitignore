@@ -1,5 +1,7 @@
 *.opendb
 x64/
 Alcatraz/x64
+Alcatraz-gui/x64
 .vs/
 .gitignore
+DvlErrLog.txt

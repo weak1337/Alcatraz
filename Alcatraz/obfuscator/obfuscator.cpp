@@ -30,6 +30,9 @@ void obfuscator::create_functions(std::vector<pdbparser::sym_func>functions) {
 	std::vector<uint32_t>visited_rvas;
 
 	for (auto function : functions) {
+
+		if (function.obfuscate == false)
+			continue;
 		if (std::find(visited_rvas.begin(), visited_rvas.end(), function.offset) != visited_rvas.end())
 			continue;
 		if (function.size < 5)
@@ -41,6 +44,12 @@ void obfuscator::create_functions(std::vector<pdbparser::sym_func>functions) {
 		uint32_t offset = 0;
 
 		function_t new_function(function_iterator++,function.name, function.offset, function.size );
+
+		new_function.ctfflattening = function.ctfflattening;
+		new_function.movobf = function.movobf;
+		new_function.mutateobf = function.mutateobf;
+		new_function.leaobf = function.leaobf;
+		new_function.antidisassembly = function.antidisassembly;
 
 		while (ZYAN_SUCCESS(ZydisDecoderDecodeBuffer(&decoder, (void*)(address_to_analyze + offset), function.size - offset, &zyinstruction))) {
 
@@ -64,7 +73,7 @@ void obfuscator::add_custom_entry(PIMAGE_SECTION_HEADER new_section) {
 	
 
 
-	if (pe->get_path().find(".exe")) {
+	if (pe->get_path().find(".exe") != std::string::npos) {
 
 		auto jit_instructions = this->instructions_from_jit(std::bit_cast<uint8_t*>(&obfuscator::custom_main), std::bit_cast<uint64_t>(&obfuscator::custom_main_end) - std::bit_cast<uint64_t>(&obfuscator::custom_main));
 
@@ -78,14 +87,14 @@ void obfuscator::add_custom_entry(PIMAGE_SECTION_HEADER new_section) {
 		}
 		pe->get_nt()->OptionalHeader.AddressOfEntryPoint = jit_instructions.at(0).relocated_address - (uint64_t)pe->get_buffer()->data();
 	}
-	else if (pe->get_path().find(".dll")) {
-		throw std::runtime_error("File type not supported!\n");
+	else if (pe->get_path().find(".dll") != std::string::npos) {
+		throw std::runtime_error("File type doesn't support custom entry!\n");
 	}
-	else if (pe->get_path().find(".sys")) {
-		throw std::runtime_error("File type not supported!\n");
+	else if (pe->get_path().find(".sys") != std::string::npos) {
+		throw std::runtime_error("File type doesn't support custom entry!\n");
 	}
 	else
-		throw std::runtime_error("File type not supported!\n");
+		throw std::runtime_error("File type doesn't support custom entry!\n");
 }
 
 bool obfuscator::find_inst_at_dst(uint64_t dst, instruction_t** instptr, function_t** funcptr) {
@@ -498,7 +507,7 @@ void obfuscator::compile(PIMAGE_SECTION_HEADER new_section) {
 
 }
 
-void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
+void obfuscator::run(PIMAGE_SECTION_HEADER new_section, bool obfuscate_entry_point) {
 
 	if (!this->analyze_functions())
 		throw std::runtime_error("couldn't analyze functions");
@@ -516,7 +525,8 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 	for (auto func = functions.begin(); func != functions.end(); func++) {
 		
 		//Obfuscate control flow
-		this->flatten_control_flow(func);
+		if(func->ctfflattening)
+			this->flatten_control_flow(func);
 		
 		for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); instruction++) {
 	
@@ -528,33 +538,49 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 
 			
 			//Obfuscate 0xFF instructions to throw off disassemblers
-			//if (instruction->raw_bytes.data()[0] == 0xFF)
-				//this->obfuscate_ff(func, instruction);
+			if (func->antidisassembly) {
+				if (instruction->raw_bytes.data()[0] == 0xFF)
+					this->obfuscate_ff(func, instruction);
+			}
+			
 
 			//Obfuscate ADD
-			if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_ADD)
-				this->obfuscate_add(func, instruction);
+			if (func->mutateobf) {
+				if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_ADD)
+					this->obfuscate_add(func, instruction);
+			}
+			
 
 			//Obfuscate LEA
-			if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_LEA && instruction->has_relative)
-				this->obfuscsate_lea(func, instruction);
+			if (func->leaobf) {
+				if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_LEA && instruction->has_relative)
+					this->obfuscsate_lea(func, instruction);
+			}
+		
+		
 				
 			//Obfuscate MOV
-			if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_MOV)
-			{
-				int randnum = rand() % 3 + 1;
-				int i = 0;
-				while (this->obfuscate_mov(func, instruction) && i < randnum) {
-					instruction -= 6;
-					i++;
+			if (func->movobf) {
+				if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_MOV)
+				{
+					int randnum = rand() % 3 + 1;
+					int i = 0;
+					while (this->obfuscate_mov(func, instruction) && i < randnum) {
+						instruction -= 6;
+						i++;
+					}
 				}
-			}	
-			
-			int randval = rand() % 20 + 1;
-			
-			if (randval == 1) {
-				//this->add_junk(func, instruction);
 			}
+			
+			if (func->antidisassembly) {
+				int randval = rand() % 20 + 1;
+
+				if (randval == 1) {
+					this->add_junk(func, instruction);
+				}
+			}
+		
+			
 		}
 		
 	}
@@ -568,7 +594,8 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section) {
 		throw std::runtime_error("couldn't apply relocs");
 
 	this->compile(new_section);
-	this->add_custom_entry(new_section);
+	if(obfuscate_entry_point)
+		this->add_custom_entry(new_section);
 }
 
 uint32_t obfuscator::get_added_size() {

@@ -242,4 +242,5 @@ bool obfuscator::flatten_control_flow(std::vector<obfuscator::function_t>::itera
 		}
 	}
 	
+	return true;
 }

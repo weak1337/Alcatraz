@@ -1,0 +1,147 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\gui">
+      <UniqueIdentifier>{3a0781d9-9624-461b-a743-7b6d6e092e5c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\gui\imgui">
+      <UniqueIdentifier>{a63e86d5-f46e-4d28-87e0-139bcf20088c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\interface">
+      <UniqueIdentifier>{0fc065de-c977-4ff0-b23f-6c68c126b020}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\extern">
+      <UniqueIdentifier>{e5326f61-596e-4349-ab26-54953affbcfd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\extern\pe">
+      <UniqueIdentifier>{b6b12d49-f1f9-4fe1-baa4-8f46b031f60a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\extern\pdbparser">
+      <UniqueIdentifier>{2617a4a1-54d9-4cc6-9a1f-0dcb52e9bc09}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\extern\obfuscator">
+      <UniqueIdentifier>{a247acdb-0c07-4677-8369-9ad691a62b09}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\extern\obfuscator\misc">
+      <UniqueIdentifier>{050218ef-e1da-40ad-a7a1-ff4177c00c0d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\extern\obfuscator\passes">
+      <UniqueIdentifier>{8bb59170-beb7-4192-bf0e-bb9a423cee95}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gui\imgui\imgui.cpp">
+      <Filter>Header Files\gui\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="gui\imgui\imgui_demo.cpp">
+      <Filter>Header Files\gui\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="gui\imgui\imgui_draw.cpp">
+      <Filter>Header Files\gui\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="gui\imgui\imgui_impl_dx11.cpp">
+      <Filter>Header Files\gui\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="gui\imgui\imgui_impl_win32.cpp">
+      <Filter>Header Files\gui\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="gui\imgui\imgui_tables.cpp">
+      <Filter>Header Files\gui\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="gui\imgui\imgui_widgets.cpp">
+      <Filter>Header Files\gui\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="gui\gui.cpp">
+      <Filter>Header Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="interface\interface.cpp">
+      <Filter>Header Files\interface</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Alcatraz\pe\pe.cpp">
+      <Filter>Header Files\extern\pe</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Alcatraz\pdbparser\pdbparser.cpp">
+      <Filter>Header Files\extern\pdbparser</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Alcatraz\obfuscator\obfuscator.cpp">
+      <Filter>Header Files\extern\obfuscator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Alcatraz\obfuscator\misc\cfflattener.cpp">
+      <Filter>Header Files\extern\obfuscator\misc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Alcatraz\obfuscator\misc\custom_entry.cpp">
+      <Filter>Header Files\extern\obfuscator\misc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Alcatraz\obfuscator\misc\iat.cpp">
+      <Filter>Header Files\extern\obfuscator\misc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Alcatraz\obfuscator\passes\add.cpp">
+      <Filter>Header Files\extern\obfuscator\passes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Alcatraz\obfuscator\passes\antidisassembly.cpp">
+      <Filter>Header Files\extern\obfuscator\passes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Alcatraz\obfuscator\passes\lea.cpp">
+      <Filter>Header Files\extern\obfuscator\passes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Alcatraz\obfuscator\passes\mov.cpp">
+      <Filter>Header Files\extern\obfuscator\passes</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="gui\imgui\imconfig.h">
+      <Filter>Header Files\gui\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="gui\imgui\imgui.h">
+      <Filter>Header Files\gui\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="gui\imgui\imgui_impl_dx11.h">
+      <Filter>Header Files\gui\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="gui\imgui\imgui_impl_win32.h">
+      <Filter>Header Files\gui\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="gui\imgui\imgui_internal.h">
+      <Filter>Header Files\gui\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="gui\imgui\imstb_rectpack.h">
+      <Filter>Header Files\gui\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="gui\imgui\imstb_textedit.h">
+      <Filter>Header Files\gui\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="gui\imgui\imstb_truetype.h">
+      <Filter>Header Files\gui\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="gui\gui.h">
+      <Filter>Header Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\interface.h">
+      <Filter>Header Files\interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Alcatraz\pe\pe.h">
+      <Filter>Header Files\extern\pe</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Alcatraz\pdbparser\pdbparser.h">
+      <Filter>Header Files\extern\pdbparser</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Alcatraz\obfuscator\obfuscator.h">
+      <Filter>Header Files\extern\obfuscator</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

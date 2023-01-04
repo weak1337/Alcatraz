@@ -19,9 +19,20 @@ private:
 public:
 
 	struct sym_func {
+
+		int id;
+
 		uint32_t offset;
 		std::string name;
 		uint32_t size;
+		bool obfuscate = true;
+
+		bool ctfflattening = true;
+		bool movobf = true;
+		bool mutateobf = true;
+		bool leaobf = true;
+		bool antidisassembly = true;
+		
 	};
 
 	pdbparser(pe64* pe);

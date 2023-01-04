@@ -27,7 +27,7 @@ int main() {
 
 		obfuscator obf(&pe);
 		obf.create_functions(functions);
-		obf.run(new_section);
+		obf.run(new_section, true);
 	
 		auto extension = std::filesystem::path(binary_path).extension();
 		pe.save_to_disk(std::filesystem::path(binary_path).replace_extension().string() + ".obf" + extension.string(), new_section, obf.get_added_size());

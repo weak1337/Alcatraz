@@ -11,7 +11,8 @@ using namespace asmjit;
 
 class obfuscator {
 private:
-
+	struct instruction_t;
+	struct function_t;
 	pe64* pe;
 
 	static int instruction_id;
@@ -22,46 +23,6 @@ private:
 	JitRuntime rt;
 	CodeHolder code;
 	x86::Assembler assm;
-
-	struct instruction_t {
-
-		int inst_id;
-		int func_id;
-		bool is_first_instruction;
-		std::vector<uint8_t>raw_bytes;
-		uint64_t runtime_address;
-		uint64_t relocated_address;
-		ZydisDecodedInstruction zyinstr;
-		bool has_relative;
-		bool isjmpcall;
-
-		struct {
-			int target_inst_id;
-			int target_func_id;
-			uint32_t offset;
-			uint32_t size;
-		}relative;
-
-		uint64_t location_of_data;
-
-
-		void load_relative_info();
-		void load(int funcid, std::vector<uint8_t>raw_data);
-		void load(int funcid, ZydisDecodedInstruction zyinstruction, uint64_t runtime_address);
-		void reload();
-		void print();
-	};
-
-	struct function_t {
-		int func_id;
-		std::string name;
-		std::vector<instruction_t>instructions;
-		uint32_t offset;
-		uint32_t size;
-
-		function_t(int func_id, std::string name, uint32_t offset, uint32_t size) : func_id(func_id), name(name), offset(offset), size(size) {};
-
-	};
 
 	std::vector<function_t>functions;
 
@@ -114,9 +75,55 @@ public:
 
 	void create_functions(std::vector<pdbparser::sym_func>functions);
 
-	void run(PIMAGE_SECTION_HEADER new_section);
+	void run(PIMAGE_SECTION_HEADER new_section, bool obfuscate_entry_point);
 
 	uint32_t get_added_size();
+
+	struct instruction_t {
+
+		int inst_id;
+		int func_id;
+		bool is_first_instruction;
+		std::vector<uint8_t>raw_bytes;
+		uint64_t runtime_address;
+		uint64_t relocated_address;
+		ZydisDecodedInstruction zyinstr;
+		bool has_relative;
+		bool isjmpcall;
+
+		struct {
+			int target_inst_id;
+			int target_func_id;
+			uint32_t offset;
+			uint32_t size;
+		}relative;
+
+		uint64_t location_of_data;
+
+
+		void load_relative_info();
+		void load(int funcid, std::vector<uint8_t>raw_data);
+		void load(int funcid, ZydisDecodedInstruction zyinstruction, uint64_t runtime_address);
+		void reload();
+		void print();
+	};
+
+	struct function_t {
+		int func_id;
+		std::string name;
+		std::vector<instruction_t>instructions;
+		uint32_t offset;
+		uint32_t size;
+
+		function_t(int func_id, std::string name, uint32_t offset, uint32_t size) : func_id(func_id), name(name), offset(offset), size(size) {};
+
+		bool ctfflattening = true;
+		bool movobf = true;
+		bool mutateobf = true;
+		bool leaobf = true;
+		bool antidisassembly = true;
+
+	};
 
 };
 
