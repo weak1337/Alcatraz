@@ -6,6 +6,7 @@ Alcatraz is a x64 binary obfuscator that is able to obfuscate various different 
 
 # Overview
 - [Alcatraz](#alcatraz)
+- [Usage](#usage)
 - [Features](#features)
     + [Obfuscation of immediate moves](#obfuscation-of-immediate-moves)
     + [Control flow flattening](#control-flow-flattening)
@@ -19,8 +20,8 @@ Alcatraz is a x64 binary obfuscator that is able to obfuscate various different 
 # Usage
 ![imgbefore](images/gui.PNG)
 1.) Load a binary by clicking `file` in the top left corner.  
-2.) Add functions by expanding the `Functions` tree. (You can search by putting in the name in the searchbar at the top)
-3.) Hit compile
+2.) Add functions by expanding the `Functions` tree. (You can search by putting in the name in the searchbar at the top)  
+3.) Hit `compile`
 # Features
 In the following showcase all features (besides the one being showcased) are disabled.
 ### Obfuscation of immediate moves
