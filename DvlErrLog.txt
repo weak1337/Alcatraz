@@ -1,3 +1,0 @@
-System.Exception: Please select a driver project. Driver Verification Log cannot be created for the selected platform tool set: 'v143'.
-   at Microsoft.SdvMenuCommand.DriverVerificationLicense..ctor()
-   at Microsoft.SdvMenuCommand.SdvMenuCommandPackage.StaticToolsLogoMenuItemCallback(Object sender, EventArgs e)
