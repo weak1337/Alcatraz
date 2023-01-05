@@ -80,8 +80,7 @@ void gui::render_interface() {
 		ImGui::BeginChild("selectionpanel", ImVec2(100, 800), true, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 		if (ImGui::Button("Protection", ImVec2(100, 100)))
 			panel = 0;
-		if (ImGui::Button("About", ImVec2(100, 100)))
-			panel = 1;
+
 		ImGui::EndChild();
 
 
@@ -207,9 +206,7 @@ void gui::render_interface() {
 			ImGui::PopStyleColor();
 
 		}
-		else {
-
-		}
+		
 
 		ImGui::PopStyleColor();
 

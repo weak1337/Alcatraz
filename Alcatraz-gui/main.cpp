@@ -33,7 +33,7 @@ int main(int, char**)
         return 1;
     }
 
-   
+    ::ShowWindow(hwnd, SW_HIDE);
     ::ShowWindow(hwnd, SW_SHOWDEFAULT);
     ::UpdateWindow(hwnd);
 
