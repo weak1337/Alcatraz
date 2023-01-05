@@ -11,7 +11,7 @@ Alcatraz is a x64 binary obfuscator that is able to obfuscate various different 
     + [Obfuscation of immediate moves](#obfuscation-of-immediate-moves)
     + [Control flow flattening](#control-flow-flattening)
     + [ADD mutation](#add-mutation)
-    + [Entrypoint obfuscation](#entrypoint-obfuscation)
+    + [Entry-point obfuscation](#entry-point-obfuscation)
     + [Lea obfuscation](#lea-obfuscation)
     + [Anti disassembly](#anti-disassembly)
     + [Import obfuscation](#import-obfuscation)
@@ -21,7 +21,7 @@ Alcatraz is a x64 binary obfuscator that is able to obfuscate various different 
 ![imgbefore](images/gui.PNG)
 1.) Load a binary by clicking `file` in the top left corner.  
 2.) Add functions by expanding the `Functions` tree. (You can search by putting in the name in the searchbar at the top)  
-3.) Hit `compile`
+3.) Hit `compile` (note: obfuscating lots of functions might take some seconds)  
 # Features
 In the following showcase all features (besides the one being showcased) are disabled.
 ### Obfuscation of immediate moves
@@ -37,7 +37,7 @@ If we throw this into IDA 7.6 the decompiler will optimize it:
 ![imgmainnoobf](images/flatten_func_noobf.PNG)  
 Now let's flatten its control flow and let IDA analyze it again:  
 ![imgmainobf](images/flatten_func_obf.PNG)  
-As you can see, the complexity increased by a lot even though I only show a small portion of the generated code. If you want to know what the cfg looks like take a look:
+As you can see, the complexity increased by a lot even though I only show a small portion of the generated code. If you want to know what the cfg looks like:
 ![imgmaincfg](images/flatten_func_cfg.PNG)  
 ### ADD mutation
 If a register (eg. RAX) is added to another register (eg. RCX) we will mutate the instruction. This means that the syntax changes but not the semantic.
@@ -50,8 +50,8 @@ pop rax
 sub rcx, 1
 ```
 If you want to learn more about mutation take a look at [perses](https://github.com/mike1k/perses).
-### Entrypoint obfuscation
-If the PE file is a .exe (.dll support will be added) we will create a custom entrypoint that decrypts the real one on startup (!!! doesn't work when beeing manual mapped).  
+### Entry point obfuscation
+If the PE file is a .exe (.dll support will be added) we will create a custom entry point that decrypts the real one on startup (!!! doesn't work when beeing manual mapped).  
 ![imgmaincfg](images/customentry.PNG)  
 ### Lea obfuscation
 The lea obfuscation is quite simple yet effective. We move a different location into the register and decrypt it afterwards. This way, reverse engineers can't cross reference certain data / functions.  
@@ -67,7 +67,7 @@ rcx -> 0xDEAD
 ```
 ### Anti disassembly
 If we find an instruction that starts with the byte 0xFF we will put a 0xEB infront of it.  
-We do this because 0xEB 0xFF encodes to jmp rip + 1 which ultimately jumps to our actual first 0xFF. This will throw off tools that decode instructions in a linear way.  
+We do this because 0xEB 0xFF encodes to jmp rip + 1 which, in the end, jumps to our actual first 0xFF. This will throw off tools that decode instructions in a linear way.  
 Before:  
 ![imgffbefore](images/ffbefore.PNG)  
 After:  
