@@ -5,13 +5,15 @@
 #include <iostream>
 #include <filesystem>
 
-int main() {
-	std::string binary_path = 
-	//	"C:\\Users\\reale\\Desktop\\Alcatraz\\x64\\Release\\Alcatraz.exe";
-		"C:\\Users\\bsodcloud\\Desktop\\Klar.gg\\Hello\\x64\\Release\\hello.exe";
-		//"C:\\Users\\bsodcloud\\Desktop\\Klar.gg\\KlarNetworking - Kopie\\x64\\Release\\Klarclient.exe";
-		//"C:\\Users\\bsodcloud\\Desktop\\projects\\pe_obf\\x64\\Release\\build.exe";
-		//"C:\\Users\\bsodcloud\\Desktop\\Klar.gg\\KlarPhysMapper\\x64\\Release\\KlarPhysMapper.sys";
+int main(int args, char* argv[]) {
+
+	if (args != 2) {
+		printf("Usage: [exe_path]\n");
+		return 0;
+	}
+
+
+	std::string binary_path = argv[1];
 	const clock_t begin_time = clock();
 
 	try {
