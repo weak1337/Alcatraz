@@ -6,6 +6,7 @@ Alcatraz is a x64 binary obfuscator that is able to obfuscate various different 
 
 # Overview
 - [Alcatraz](#alcatraz)
+- [Requirements](#requirements)
 - [Usage](#usage)
 - [Features](#features)
     + [Obfuscation of immediate moves](#obfuscation-of-immediate-moves)
@@ -16,6 +17,11 @@ Alcatraz is a x64 binary obfuscator that is able to obfuscate various different 
     + [Anti disassembly](#anti-disassembly)
     + [Import obfuscation](#import-obfuscation)
 	+ [Final result](#final-result)
+# Requirements
+Install: https://vcpkg.io/en/getting-started.html  
+
+`asmjit`: vcpkg.exe install asmjit:x64-windows  
+`Zydis`: vcpkg.exe install asmjit:x64-windows
 
 # Usage
 ![imgbefore](images/gui.PNG)
