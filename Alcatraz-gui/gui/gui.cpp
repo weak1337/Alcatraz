@@ -176,7 +176,7 @@ void gui::render_interface() {
 			}
 			else {
 
-				auto func = &funcs.at(selected_func);
+				auto func = std::find_if(funcs.begin(), funcs.end(), [&](const pdbparser::sym_func infunc) { return infunc.id == selected_func; });
 				ImGui::Text("Name : %s", func->name.c_str());
 				ImGui::Text("Address : %x", func->offset);
 				ImGui::Text("Size : %i bytes", func->size);
