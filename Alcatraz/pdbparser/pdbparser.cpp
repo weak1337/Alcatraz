@@ -38,7 +38,7 @@ pdbparser::pdbparser(pe64* pe) {
 			reinterpret_cast<codeviewInfo_t*>(pe->get_buffer_not_relocated()->data() + current_debug_dir->PointerToRawData);
 
 		std::string pdb_path = codeview_info->PdbFileName;
-		if (!std::filesystem::exists(codeview_info->PdbFileName))
+		if (!std::filesystem::exists(std::filesystem::path(pdb_path)))
 		{
 
 			std::filesystem::path ppdb_path = binary_path;
