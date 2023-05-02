@@ -92,7 +92,7 @@ void gui::render_interface() {
 
 			
 				ImGui::SetNextItemWidth(300);
-				ImGui::InputText("", func_name, 1024);
+				ImGui::InputText("##treeAddFuncs", func_name, 1024);
 
 				if (ImGui::TreeNode("Added functions")) {
 					for (int i = 0; i < funcs_to_obfuscate.size(); i++)
