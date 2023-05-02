@@ -126,12 +126,9 @@ void gui::render_interface() {
 				
 				if (ImGui::Button("Add all")) {
 
-					for (auto func = funcs.begin(); func != funcs.end(); ++func) {
-
-						funcs_to_obfuscate.push_back(*func);
-						func = funcs.erase(func);
-						func--;
-
+					while (funcs.size() != 0) {
+						funcs_to_obfuscate.push_back(funcs.front());
+						funcs.erase(funcs.begin());
 					}
 
 				}
