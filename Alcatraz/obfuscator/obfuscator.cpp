@@ -51,6 +51,8 @@ void obfuscator::create_functions(std::vector<pdbparser::sym_func>functions) {
 		new_function.leaobf = function.leaobf;
 		new_function.antidisassembly = function.antidisassembly;
 
+		std::vector <uint64_t> runtime_addresses;
+
 		while (ZYAN_SUCCESS(ZydisDecoderDecodeBuffer(&decoder, (void*)(address_to_analyze + offset), function.size - offset, &zyinstruction))) {
 
 			instruction_t new_instruction{};
@@ -61,10 +63,19 @@ void obfuscator::create_functions(std::vector<pdbparser::sym_func>functions) {
 			new_function.instructions.push_back(new_instruction);
 			offset += new_instruction.zyinstr.length;
 
+			uint64_t inst_index = new_function.instructions.size() - 1;
+			this->runtime_addr_track[new_instruction.runtime_address].inst_index = inst_index;
+			runtime_addresses.push_back(new_instruction.runtime_address);
+
+			new_function.inst_id_index[new_instruction.inst_id] = inst_index;
 		}
 
 		visited_rvas.push_back(function.offset);
 		this->functions.push_back(new_function);
+
+		for (auto runtime_address = runtime_addresses.begin(); runtime_address != runtime_addresses.end(); ++runtime_address) {
+			this->runtime_addr_track[*runtime_address].func_id = new_function.func_id;
+		}
 	}
 	
 }
@@ -99,17 +110,10 @@ void obfuscator::add_custom_entry(PIMAGE_SECTION_HEADER new_section) {
 
 bool obfuscator::find_inst_at_dst(uint64_t dst, instruction_t** instptr, function_t** funcptr) {
 
-	for (auto func = functions.begin(); func != functions.end(); ++func) {
-
-		for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); ++instruction) {
-
-			if (instruction->runtime_address == dst)
-			{
-				*instptr = &(*instruction);
-				*funcptr = &(*func);
-				return true;
-			}
-		}
+	if (this->runtime_addr_track.find(dst) != this->runtime_addr_track.end()) {
+		*funcptr = &(this->functions[this->runtime_addr_track[dst].func_id]);
+		*instptr = &(*funcptr)->instructions[this->runtime_addr_track[dst].inst_index];
+		return true;
 	}
 	return false;
 }
@@ -122,8 +126,7 @@ void obfuscator::remove_jumptables() {
 				auto relative_address = instruction->runtime_address + *(int32_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) + instruction->zyinstr.length;
 				
 				if (relative_address == (uint64_t)this->pe->get_buffer()->data()) {
-					func = this->functions.erase(func);
-					--func;
+					func->has_jumptables = true;
 					break;
 				}
 			}
@@ -136,44 +139,46 @@ bool obfuscator::analyze_functions() {
 	this->remove_jumptables();
 
 	for (auto func = functions.begin(); func != functions.end(); func++) {
-		for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); instruction++) {
+		if (!func->has_jumptables) {
+			for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); instruction++) {
 
-			if (instruction->has_relative) {
+				if (instruction->has_relative) {
 				
-				if (instruction->isjmpcall) {
+					if (instruction->isjmpcall) {
 
-					uint64_t absolute_address = 0;
+						uint64_t absolute_address = 0;
 
-					if (!ZYAN_SUCCESS(ZydisCalcAbsoluteAddress(&instruction->zyinstr, &instruction->zyinstr.operands[0], instruction->runtime_address, &absolute_address)))
-						return false;
+						if (!ZYAN_SUCCESS(ZydisCalcAbsoluteAddress(&instruction->zyinstr, &instruction->zyinstr.operands[0], instruction->runtime_address, &absolute_address)))
+							return false;
 					
-					obfuscator::instruction_t* instptr;
-					obfuscator::function_t* funcptr;
+						obfuscator::instruction_t* instptr;
+						obfuscator::function_t* funcptr;
 
-					if (!this->find_inst_at_dst(absolute_address, &instptr, &funcptr)) {
-						instruction->relative.target_inst_id = -1; //It doesnt jump to a func we relocate so we use absolute
-						continue;
+						if (!this->find_inst_at_dst(absolute_address, &instptr, &funcptr)) {
+							instruction->relative.target_inst_id = -1; //It doesnt jump to a func we relocate so we use absolute
+							continue;
+						}
+
+						instruction->relative.target_inst_id = instptr->inst_id;
+						instruction->relative.target_func_id = funcptr->func_id;
 					}
+					else {
 
-					instruction->relative.target_inst_id = instptr->inst_id;
-					instruction->relative.target_func_id = funcptr->func_id;
-				}
-				else {
-
-					uint64_t original_data = instruction->runtime_address + instruction->zyinstr.length;
+						uint64_t original_data = instruction->runtime_address + instruction->zyinstr.length;
 					
-					switch(instruction->relative.size){
-					case 8:
-						original_data += *(int8_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]);
-						break;
-					case 16:
-						original_data += *(int16_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]);
-						break;
-					case 32:
-						original_data += *(int32_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]);
-						break;
+						switch(instruction->relative.size){
+						case 8:
+							original_data += *(int8_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]);
+							break;
+						case 16:
+							original_data += *(int16_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]);
+							break;
+						case 32:
+							original_data += *(int32_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]);
+							break;
+						}
+						instruction->location_of_data = original_data;
 					}
-					instruction->location_of_data = original_data;
 				}
 			}
 		}
