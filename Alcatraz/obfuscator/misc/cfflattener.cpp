@@ -172,6 +172,7 @@ bool obfuscator::flatten_control_flow(std::vector<obfuscator::function_t>::itera
 			});
 
 		auto next_block = std::find_if(blocks.begin(), blocks.end(), [&](const block_t block) {return block.block_id == current_block->next_block; });
+		if (next_block == blocks.end()) continue;
 
 		if (is_jmp_conditional(last_instruction->zyinstr) && current_block->dst_block != -1) {
 

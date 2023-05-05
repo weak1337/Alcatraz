@@ -136,6 +136,7 @@ void gui::render_interface() {
 				if (ImGui::Button("Compile")) {
 					try {
 						inter::run_obfuscator(funcs_to_obfuscate, obf_entry_point);
+						MessageBoxA(0, "Compiled", "Success", 0);
 					}
 					catch (std::runtime_error e)
 					{
@@ -143,13 +144,10 @@ void gui::render_interface() {
 						path = "";
 						//std::cout << "Runtime error: " << e.what() << std::endl;
 					}
-
-					MessageBoxA(0, "Compiled", "Success", 0);
-
 				}
-
-				ImGui::EndChild();
 			}
+			ImGui::EndChild();
+
 			
 			ImGui::SetNextWindowPos(ImVec2(400, 25));
 			ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.48f, 0.48f, 0.48f, 0.94f));
