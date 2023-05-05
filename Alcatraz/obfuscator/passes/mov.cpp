@@ -77,9 +77,8 @@ bool obfuscator::obfuscate_mov(std::vector<obfuscator::function_t>::iterator& fu
 			auto err = rt.add(&fn, &code);
 
 			auto jitinstructions = this->instructions_from_jit((uint8_t*)fn, code.codeSize());
-			for (auto jit : jitinstructions) {
-				instruction = function->instructions.insert(instruction + 1, jit);
-			}
+			instruction = function->instructions.insert(instruction + 1, jitinstructions.begin(), jitinstructions.end());
+			instruction = instruction + jitinstructions.size() - 1;
 
 			code.reset();
 			code.init(rt.environment());
@@ -87,7 +86,7 @@ bool obfuscator::obfuscate_mov(std::vector<obfuscator::function_t>::iterator& fu
 			return true;
 
 		}
-	
+
 	}
 
 	return false;

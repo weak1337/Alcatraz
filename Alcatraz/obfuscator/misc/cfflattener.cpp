@@ -35,7 +35,7 @@ bool is_jmp_conditional(ZydisDecodedInstruction instr) {
 
 
 
-bool obfuscator::flatten_control_flow(std::vector<obfuscator::function_t>::iterator& func){
+bool obfuscator::flatten_control_flow(std::vector<obfuscator::function_t>::iterator& func) {
 
 	struct block_t {
 		int block_id;
@@ -77,13 +77,13 @@ bool obfuscator::flatten_control_flow(std::vector<obfuscator::function_t>::itera
 				continue;
 			}
 		}
-		else{
+		else {
 			block.block_id = block_iterator++;
 			blocks.push_back(block);
 			block.instructions.clear();
 			continue;
 		}
-		
+
 		if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_RET || (instruction->isjmpcall && instruction->zyinstr.mnemonic != ZYDIS_MNEMONIC_CALL))
 		{
 			block.block_id = block_iterator++;
@@ -91,18 +91,18 @@ bool obfuscator::flatten_control_flow(std::vector<obfuscator::function_t>::itera
 			block.instructions.clear();
 		}
 	}
-	
+
 
 	//Time to link them together
 	for (auto current_block = blocks.begin(); current_block != blocks.end(); current_block++) {
-		
+
 		auto last_instruction = current_block->instructions.end() - 1;
 		current_block->next_block = current_block->block_id + 1;
 
-	
-		if (last_instruction->isjmpcall && is_jmp_conditional(last_instruction->zyinstr)) {	
+
+		if (last_instruction->isjmpcall && is_jmp_conditional(last_instruction->zyinstr)) {
 			for (auto current_block2 = blocks.begin(); current_block2 != blocks.end(); current_block2++) {
-				
+
 				auto first_instruction = current_block2->instructions.begin();
 				if (first_instruction->inst_id == last_instruction->relative.target_inst_id) {
 					current_block->dst_block = current_block2->block_id;
@@ -136,22 +136,19 @@ bool obfuscator::flatten_control_flow(std::vector<obfuscator::function_t>::itera
 
 		instruction_t cmp_eax{}; cmp_eax.load(func->func_id, { 0x3D, 0x00, 0x00,0x00,0x00 });
 		*(uint32_t*)&cmp_eax.raw_bytes.data()[1] = current_block->block_id;
-		
+
 		instruction_t jne{}; jne.load(func->func_id, { 0x75, 0x08 });
 
 		instruction_t pop_f{}; pop_f.load(func->func_id, { 0x66, 0x9D });
 
 		instruction_t pop_rax{}; pop_rax.load(func->func_id, { 0x58 });
-		
+
 		instruction_t jmp{}; jmp.load(func->func_id, { 0xE9,0x00,0x00,0x00,0x00 });
 		jmp.relative.target_inst_id = current_block->block_id == 0 ? new_id : current_block->instructions.begin()->inst_id;
 		jmp.relative.target_func_id = func->func_id;
-		
-		it = func->instructions.insert(it + 1, cmp_eax);
-		it = func->instructions.insert(it + 1, jne);
-		it = func->instructions.insert(it + 1, pop_f);
-		it = func->instructions.insert(it + 1, pop_rax);
-		it = func->instructions.insert(it+1, jmp);
+
+		it = func->instructions.insert(it + 1, { cmp_eax , jne, pop_f, pop_rax, jmp });
+		it = it + 4;
 	}
 
 	//Fix added jz relatives
@@ -191,10 +188,8 @@ bool obfuscator::flatten_control_flow(std::vector<obfuscator::function_t>::itera
 				jmp.relative.target_func_id = func->func_id;
 				jmp.relative.target_inst_id = (func->instructions.begin() + 3)->inst_id;
 
-				last_instruction = func->instructions.insert(last_instruction + 1, push_rax);
-				last_instruction = func->instructions.insert(last_instruction + 1, push_f);
-				last_instruction = func->instructions.insert(last_instruction + 1, mov_eax);
-				last_instruction = func->instructions.insert(last_instruction + 1, jmp);
+				last_instruction = func->instructions.insert(last_instruction + 1, { push_rax , push_f, mov_eax, jmp });
+				last_instruction = last_instruction + 3;
 			}
 
 			//This happens if condition is met
@@ -211,11 +206,8 @@ bool obfuscator::flatten_control_flow(std::vector<obfuscator::function_t>::itera
 				jmp.relative.target_func_id = func->func_id;
 				jmp.relative.target_inst_id = (func->instructions.begin() + 3)->inst_id;
 
-
-				last_instruction = func->instructions.insert(last_instruction + 1, push_rax);
-				last_instruction = func->instructions.insert(last_instruction + 1, push_f);
-				last_instruction = func->instructions.insert(last_instruction + 1, mov_eax);
-				last_instruction = func->instructions.insert(last_instruction + 1, jmp);
+				last_instruction = func->instructions.insert(last_instruction + 1, { push_rax , push_f, mov_eax, jmp });
+				last_instruction = last_instruction + 3;
 			}
 
 			//Lets set the destination of our conditinal jump to our second option
@@ -236,12 +228,10 @@ bool obfuscator::flatten_control_flow(std::vector<obfuscator::function_t>::itera
 			jmp.relative.target_func_id = func->func_id;
 			jmp.relative.target_inst_id = (func->instructions.begin() + 3)->inst_id;
 
-			auto it = func->instructions.insert(last_instruction + 1, push_rax);
-			it = func->instructions.insert(it + 1, push_f);
-			it = func->instructions.insert(it + 1, mov_eax);
-			it = func->instructions.insert(it + 1, jmp);
+			auto it = func->instructions.insert(last_instruction + 1, { push_rax , push_f, mov_eax, jmp });
+			it = it + 3;
 		}
 	}
-	
+
 	return true;
 }

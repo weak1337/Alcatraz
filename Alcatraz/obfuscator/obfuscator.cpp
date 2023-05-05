@@ -15,7 +15,7 @@ obfuscator::obfuscator(pe64* pe) {
 	if (!ZYAN_SUCCESS(ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_ADDRESS_WIDTH_64)))
 		throw std::runtime_error("failed to init decoder");
 
-	if(!ZYAN_SUCCESS(ZydisFormatterInit(&formatter, ZYDIS_FORMATTER_STYLE_INTEL)))
+	if (!ZYAN_SUCCESS(ZydisFormatterInit(&formatter, ZYDIS_FORMATTER_STYLE_INTEL)))
 		throw std::runtime_error("failed to init formatter");
 
 }
@@ -43,13 +43,15 @@ void obfuscator::create_functions(std::vector<pdbparser::sym_func>functions) {
 		auto address_to_analyze = this->pe->get_buffer()->data() + text_section->VirtualAddress + function.offset;
 		uint32_t offset = 0;
 
-		function_t new_function(function_iterator++,function.name, function.offset, function.size );
+		function_t new_function(function_iterator++, function.name, function.offset, function.size);
 
 		new_function.ctfflattening = function.ctfflattening;
 		new_function.movobf = function.movobf;
 		new_function.mutateobf = function.mutateobf;
 		new_function.leaobf = function.leaobf;
 		new_function.antidisassembly = function.antidisassembly;
+
+		std::vector <uint64_t> runtime_addresses;
 
 		while (ZYAN_SUCCESS(ZydisDecoderDecodeBuffer(&decoder, (void*)(address_to_analyze + offset), function.size - offset, &zyinstruction))) {
 
@@ -61,16 +63,25 @@ void obfuscator::create_functions(std::vector<pdbparser::sym_func>functions) {
 			new_function.instructions.push_back(new_instruction);
 			offset += new_instruction.zyinstr.length;
 
+			uint64_t inst_index = new_function.instructions.size() - 1;
+			this->runtime_addr_track[new_instruction.runtime_address].inst_index = inst_index;
+			runtime_addresses.push_back(new_instruction.runtime_address);
+
+			new_function.inst_id_index[new_instruction.inst_id] = inst_index;
 		}
 
 		visited_rvas.push_back(function.offset);
 		this->functions.push_back(new_function);
+
+		for (auto runtime_address = runtime_addresses.begin(); runtime_address != runtime_addresses.end(); ++runtime_address) {
+			this->runtime_addr_track[*runtime_address].func_id = new_function.func_id;
+		}
 	}
-	
+
 }
 
 void obfuscator::add_custom_entry(PIMAGE_SECTION_HEADER new_section) {
-	
+
 
 
 	if (pe->get_path().find(".exe") != std::string::npos) {
@@ -99,17 +110,14 @@ void obfuscator::add_custom_entry(PIMAGE_SECTION_HEADER new_section) {
 
 bool obfuscator::find_inst_at_dst(uint64_t dst, instruction_t** instptr, function_t** funcptr) {
 
-	for (auto func = functions.begin(); func != functions.end(); ++func) {
+	if (this->runtime_addr_track.find(dst) != this->runtime_addr_track.end()) {
+		*funcptr = &(this->functions[this->runtime_addr_track[dst].func_id]);
 
-		for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); ++instruction) {
+		if ((*funcptr)->has_jumptables)
+			return false;
 
-			if (instruction->runtime_address == dst)
-			{
-				*instptr = &(*instruction);
-				*funcptr = &(*func);
-				return true;
-			}
-		}
+		*instptr = &(*funcptr)->instructions[this->runtime_addr_track[dst].inst_index];
+		return true;
 	}
 	return false;
 }
@@ -120,10 +128,9 @@ void obfuscator::remove_jumptables() {
 			if (instruction->has_relative && !instruction->isjmpcall && instruction->relative.size == 32) {
 
 				auto relative_address = instruction->runtime_address + *(int32_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) + instruction->zyinstr.length;
-				
+
 				if (relative_address == (uint64_t)this->pe->get_buffer()->data()) {
-					func = this->functions.erase(func);
-					--func;
+					func->has_jumptables = true;
 					break;
 				}
 			}
@@ -136,44 +143,46 @@ bool obfuscator::analyze_functions() {
 	this->remove_jumptables();
 
 	for (auto func = functions.begin(); func != functions.end(); func++) {
-		for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); instruction++) {
+		if (!func->has_jumptables) {
+			for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); instruction++) {
 
-			if (instruction->has_relative) {
-				
-				if (instruction->isjmpcall) {
+				if (instruction->has_relative) {
 
-					uint64_t absolute_address = 0;
+					if (instruction->isjmpcall) {
 
-					if (!ZYAN_SUCCESS(ZydisCalcAbsoluteAddress(&instruction->zyinstr, &instruction->zyinstr.operands[0], instruction->runtime_address, &absolute_address)))
-						return false;
-					
-					obfuscator::instruction_t* instptr;
-					obfuscator::function_t* funcptr;
+						uint64_t absolute_address = 0;
 
-					if (!this->find_inst_at_dst(absolute_address, &instptr, &funcptr)) {
-						instruction->relative.target_inst_id = -1; //It doesnt jump to a func we relocate so we use absolute
-						continue;
+						if (!ZYAN_SUCCESS(ZydisCalcAbsoluteAddress(&instruction->zyinstr, &instruction->zyinstr.operands[0], instruction->runtime_address, &absolute_address)))
+							return false;
+
+						obfuscator::instruction_t* instptr;
+						obfuscator::function_t* funcptr;
+
+						if (!this->find_inst_at_dst(absolute_address, &instptr, &funcptr)) {
+							instruction->relative.target_inst_id = -1; //It doesnt jump to a func we relocate so we use absolute
+							continue;
+						}
+
+						instruction->relative.target_inst_id = instptr->inst_id;
+						instruction->relative.target_func_id = funcptr->func_id;
 					}
+					else {
 
-					instruction->relative.target_inst_id = instptr->inst_id;
-					instruction->relative.target_func_id = funcptr->func_id;
-				}
-				else {
+						uint64_t original_data = instruction->runtime_address + instruction->zyinstr.length;
 
-					uint64_t original_data = instruction->runtime_address + instruction->zyinstr.length;
-					
-					switch(instruction->relative.size){
-					case 8:
-						original_data += *(int8_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]);
-						break;
-					case 16:
-						original_data += *(int16_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]);
-						break;
-					case 32:
-						original_data += *(int32_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]);
-						break;
+						switch (instruction->relative.size) {
+						case 8:
+							original_data += *(int8_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]);
+							break;
+						case 16:
+							original_data += *(int16_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]);
+							break;
+						case 32:
+							original_data += *(int32_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]);
+							break;
+						}
+						instruction->location_of_data = original_data;
 					}
-					instruction->location_of_data = original_data;
 				}
 			}
 		}
@@ -189,6 +198,9 @@ void obfuscator::relocate(PIMAGE_SECTION_HEADER new_section) {
 	int used_memory = 0;
 
 	for (auto func = functions.begin(); func != functions.end(); ++func) {
+
+		if (func->has_jumptables)
+			continue;
 
 		uint32_t dst = new_section->VirtualAddress + used_memory;
 
@@ -294,6 +306,7 @@ bool obfuscator::fix_relative_jmps(function_t* func) {
 				return false;
 			}
 
+
 			switch (instruction->relative.size) {
 			case 8: {
 				signed int distance = inst.relocated_address - instruction->relocated_address - instruction->zyinstr.length;
@@ -356,10 +369,13 @@ bool obfuscator::fix_relative_jmps(function_t* func) {
 				break;
 			}
 			default:
+			{
 				return false;
 			}
 
-			
+			}
+
+
 
 		}
 	}
@@ -368,6 +384,9 @@ bool obfuscator::fix_relative_jmps(function_t* func) {
 
 bool obfuscator::convert_relative_jmps() {
 	for (auto func = functions.begin(); func != functions.end(); ++func) {
+
+		if (func->has_jumptables)
+			continue;
 
 		if (!this->fix_relative_jmps(&(*func)))
 			return false;
@@ -380,12 +399,16 @@ bool obfuscator::apply_relocations(PIMAGE_SECTION_HEADER new_section) {
 	this->relocate(new_section);
 
 	for (auto func = functions.begin(); func != functions.end(); ++func) {
+
+		if (func->has_jumptables)
+			continue;
+
 		for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); ++instruction) {
 
 			if (instruction->has_relative) {
 
 				if (instruction->isjmpcall) {
-					
+
 					if (instruction->relative.target_inst_id == -1) { //Points without relocation
 
 						switch (instruction->relative.size) {
@@ -411,12 +434,12 @@ bool obfuscator::apply_relocations(PIMAGE_SECTION_HEADER new_section) {
 						memcpy((void*)instruction->relocated_address, instruction->raw_bytes.data(), instruction->zyinstr.length);
 					}
 					else {
-						
+
 						instruction_t inst;
 						if (!this->find_instruction_by_id(instruction->relative.target_func_id, instruction->relative.target_inst_id, &inst)) {
 							return false;
 						}
-		
+
 						switch (instruction->relative.size) {
 						case 8: {
 							*(int8_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int8_t)(inst.relocated_address - instruction->relocated_address - instruction->zyinstr.length);
@@ -486,6 +509,9 @@ void obfuscator::compile(PIMAGE_SECTION_HEADER new_section) {
 
 	for (auto func = functions.begin(); func != functions.end(); ++func) {
 
+		if (func->has_jumptables)
+			continue;
+
 		auto first_instruction = func->instructions.begin();
 
 		const uint8_t jmp_shell[] = { 0xE9, 0x00, 0x00, 0x00, 0x00 };
@@ -502,7 +528,7 @@ void obfuscator::compile(PIMAGE_SECTION_HEADER new_section) {
 			}
 
 			memcpy((void*)(base + src), jmp_shell, sizeof(jmp_shell));
-		}	
+		}
 	}
 
 }
@@ -512,7 +538,7 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section, bool obfuscate_entry_poi
 	if (!this->analyze_functions())
 		throw std::runtime_error("couldn't analyze functions");
 
-	*(uint32_t*)(pe->get_buffer()->data() + new_section->VirtualAddress) = _rotl(pe->get_nt()->OptionalHeader.AddressOfEntryPoint, pe->get_nt()->FileHeader.TimeDateStamp)^ pe->get_nt()->OptionalHeader.SizeOfStackCommit;
+	*(uint32_t*)(pe->get_buffer()->data() + new_section->VirtualAddress) = _rotl(pe->get_nt()->OptionalHeader.AddressOfEntryPoint, pe->get_nt()->FileHeader.TimeDateStamp) ^ pe->get_nt()->OptionalHeader.SizeOfStackCommit;
 
 	code.init(rt.environment());
 	code.attach(&this->assm);
@@ -521,44 +547,47 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section, bool obfuscate_entry_poi
 	printf("OBFUSCATING: %i\n", functions.size());
 
 	//Actual obfuscation passes
-	
-	for (auto func = functions.begin(); func != functions.end(); func++) {
-		
-		//Obfuscate control flow
-		if(func->ctfflattening)
-			this->flatten_control_flow(func);
-		
-		for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); instruction++) {
-	
 
-			
+	for (auto func = functions.begin(); func != functions.end(); func++) {
+
+		if (func->has_jumptables)
+			continue;
+
+		//Obfuscate control flow
+		if (func->ctfflattening)
+			this->flatten_control_flow(func);
+
+		for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); instruction++) {
+
+
+
 			//Obfuscate IAT
 			if (instruction->isjmpcall && instruction->relative.target_inst_id == -1)
 				this->obfuscate_iat_call(func, instruction);
 
-			
+
 			//Obfuscate 0xFF instructions to throw off disassemblers
 			if (func->antidisassembly) {
 				if (instruction->raw_bytes.data()[0] == 0xFF)
 					this->obfuscate_ff(func, instruction);
 			}
-			
+
 
 			//Obfuscate ADD
 			if (func->mutateobf) {
 				if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_ADD)
 					this->obfuscate_add(func, instruction);
 			}
-			
+
 
 			//Obfuscate LEA
 			if (func->leaobf) {
 				if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_LEA && instruction->has_relative)
 					this->obfuscsate_lea(func, instruction);
 			}
-		
-		
-				
+
+
+
 			//Obfuscate MOV
 			if (func->movobf) {
 				if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_MOV)
@@ -571,7 +600,7 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section, bool obfuscate_entry_poi
 					}
 				}
 			}
-			
+
 			if (func->antidisassembly) {
 				int randval = rand() % 20 + 1;
 
@@ -579,22 +608,22 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section, bool obfuscate_entry_poi
 					this->add_junk(func, instruction);
 				}
 			}
-		
-			
+
+
 		}
-		
+
 	}
-	
+
 	this->relocate(new_section);
 
-	if(!this->convert_relative_jmps())
+	if (!this->convert_relative_jmps())
 		throw std::runtime_error("couldn't convert relative jmps");
 
 	if (!this->apply_relocations(new_section))
 		throw std::runtime_error("couldn't apply relocs");
 
 	this->compile(new_section);
-	if(obfuscate_entry_point)
+	if (obfuscate_entry_point)
 		this->add_custom_entry(new_section);
 }
 
@@ -615,7 +644,7 @@ std::vector<obfuscator::instruction_t>obfuscator::instructions_from_jit(uint8_t*
 		instructions.push_back(new_instruction);
 		offset += new_instruction.zyinstr.length;
 	}
-	
+
 	return instructions;
 }
 
@@ -716,7 +745,7 @@ void obfuscator::instruction_t::load(int funcid, std::vector<uint8_t>raw_data) {
 	this->raw_bytes = raw_data;
 	this->load_relative_info();
 }
-void obfuscator::instruction_t::load(int funcid,ZydisDecodedInstruction zyinstruction, uint64_t runtime_address) {
+void obfuscator::instruction_t::load(int funcid, ZydisDecodedInstruction zyinstruction, uint64_t runtime_address) {
 	this->inst_id = instruction_id++;
 	this->zyinstr = zyinstruction;
 	this->func_id = funcid;
