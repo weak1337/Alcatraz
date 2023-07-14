@@ -4,5 +4,8 @@
 
 /.vs
 /x64/Debug
+/x64/Release
 /Alcatraz/x64/Debug
+/Alcatraz/x64/Release
 /Alcatraz-gui/x64/Debug
+/Alcatraz-gui/x64/Release
