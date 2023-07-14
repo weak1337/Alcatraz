@@ -54,7 +54,7 @@ bool obfuscator::flatten_control_flow(std::vector<obfuscator::function_t>::itera
 	//In the first round we mark all jmp destinations that land back inside this func
 	for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); instruction++) {
 
-		if (is_jmp_conditional(instruction->zyinstr) || (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_JMP && instruction->zyinstr.raw.imm->size == 8)) {
+		if (is_jmp_conditional(instruction->zyinstr.info) || (instruction->zyinstr.info.mnemonic == ZYDIS_MNEMONIC_JMP && instruction->zyinstr.info.raw.imm->size == 8)) {
 
 			if (instruction->relative.target_func_id == func->func_id) {
 				block_starts.push_back(instruction->relative.target_inst_id);
@@ -84,7 +84,7 @@ bool obfuscator::flatten_control_flow(std::vector<obfuscator::function_t>::itera
 			continue;
 		}
 
-		if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_RET || (instruction->isjmpcall && instruction->zyinstr.mnemonic != ZYDIS_MNEMONIC_CALL))
+		if (instruction->zyinstr.info.mnemonic == ZYDIS_MNEMONIC_RET || (instruction->isjmpcall && instruction->zyinstr.info.mnemonic != ZYDIS_MNEMONIC_CALL))
 		{
 			block.block_id = block_iterator++;
 			blocks.push_back(block);
@@ -100,7 +100,7 @@ bool obfuscator::flatten_control_flow(std::vector<obfuscator::function_t>::itera
 		current_block->next_block = current_block->block_id + 1;
 
 
-		if (last_instruction->isjmpcall && is_jmp_conditional(last_instruction->zyinstr)) {
+		if (last_instruction->isjmpcall && is_jmp_conditional(last_instruction->zyinstr.info)) {
 			for (auto current_block2 = blocks.begin(); current_block2 != blocks.end(); current_block2++) {
 
 				auto first_instruction = current_block2->instructions.begin();
@@ -154,7 +154,7 @@ bool obfuscator::flatten_control_flow(std::vector<obfuscator::function_t>::itera
 	//Fix added jz relatives
 	for (auto inst = func->instructions.begin(); inst != it + 1; inst++) {
 
-		if (inst->zyinstr.mnemonic == ZYDIS_MNEMONIC_JNZ) {
+		if (inst->zyinstr.info.mnemonic == ZYDIS_MNEMONIC_JNZ) {
 			auto dst = inst + 4;
 
 			inst->relative.target_func_id = func->func_id;
@@ -171,7 +171,7 @@ bool obfuscator::flatten_control_flow(std::vector<obfuscator::function_t>::itera
 		auto next_block = std::find_if(blocks.begin(), blocks.end(), [&](const block_t block) {return block.block_id == current_block->next_block; });
 		if (next_block == blocks.end()) continue;
 
-		if (is_jmp_conditional(last_instruction->zyinstr) && current_block->dst_block != -1) {
+		if (is_jmp_conditional(last_instruction->zyinstr.info) && current_block->dst_block != -1) {
 
 			auto dst_block = std::find_if(blocks.begin(), blocks.end(), [&](const block_t block) {return block.block_id == current_block->dst_block; });
 

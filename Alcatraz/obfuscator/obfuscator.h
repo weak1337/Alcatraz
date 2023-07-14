@@ -93,7 +93,7 @@ public:
 		std::vector<uint8_t>raw_bytes;
 		uint64_t runtime_address;
 		uint64_t relocated_address;
-		ZydisDecodedInstruction zyinstr;
+		ZydisDisassembledInstruction zyinstr;
 		bool has_relative;
 		bool isjmpcall;
 
@@ -109,7 +109,7 @@ public:
 
 		void load_relative_info();
 		void load(int funcid, std::vector<uint8_t>raw_data);
-		void load(int funcid, ZydisDecodedInstruction zyinstruction, uint64_t runtime_address);
+		void load(int funcid, ZydisDisassembledInstruction zyinstruction, uint64_t runtime_address);
 		void reload();
 		void print();
 	};

@@ -11,8 +11,8 @@ int obfuscator::function_iterator = 0;
 obfuscator::obfuscator(pe64* pe) {
 
 	this->pe = pe;
-
-	if (!ZYAN_SUCCESS(ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_ADDRESS_WIDTH_64)))
+	
+	if (!ZYAN_SUCCESS(ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_STACK_WIDTH_64)))
 		throw std::runtime_error("failed to init decoder");
 
 	if (!ZYAN_SUCCESS(ZydisFormatterInit(&formatter, ZYDIS_FORMATTER_STYLE_INTEL)))
@@ -38,7 +38,7 @@ void obfuscator::create_functions(std::vector<pdbparser::sym_func>functions) {
 		if (function.size < 5)
 			continue;
 
-		ZydisDecodedInstruction zyinstruction{};
+		ZydisDisassembledInstruction zyinstruction{};
 
 		auto address_to_analyze = this->pe->get_buffer()->data() + text_section->VirtualAddress + function.offset;
 		uint32_t offset = 0;
@@ -53,7 +53,7 @@ void obfuscator::create_functions(std::vector<pdbparser::sym_func>functions) {
 
 		std::vector <uint64_t> runtime_addresses;
 
-		while (ZYAN_SUCCESS(ZydisDecoderDecodeBuffer(&decoder, (void*)(address_to_analyze + offset), function.size - offset, &zyinstruction))) {
+		while (ZYAN_SUCCESS(ZydisDisassembleIntel(ZYDIS_MACHINE_MODE_LONG_64, (ZyanU64)(address_to_analyze + offset), (const void*)(address_to_analyze + offset), function.size - offset, &zyinstruction))) {
 
 			instruction_t new_instruction{};
 			new_instruction.runtime_address = (uint64_t)address_to_analyze + offset;
@@ -61,7 +61,7 @@ void obfuscator::create_functions(std::vector<pdbparser::sym_func>functions) {
 			if (offset == 0)
 				new_instruction.is_first_instruction = true;
 			new_function.instructions.push_back(new_instruction);
-			offset += new_instruction.zyinstr.length;
+			offset += new_instruction.zyinstr.info.length;
 
 			uint64_t inst_index = new_function.instructions.size() - 1;
 			this->runtime_addr_track[new_instruction.runtime_address].inst_index = inst_index;
@@ -92,8 +92,8 @@ void obfuscator::add_custom_entry(PIMAGE_SECTION_HEADER new_section) {
 
 			void* address = (void*)(pe->get_buffer()->data() + new_section->VirtualAddress + this->total_size_used);
 			inst->relocated_address = (uint64_t)address;
-			memcpy(address, inst->raw_bytes.data(), inst->zyinstr.length);
-			this->total_size_used += inst->zyinstr.length;
+			memcpy(address, inst->raw_bytes.data(), inst->zyinstr.info.length);
+			this->total_size_used += inst->zyinstr.info.length;
 
 		}
 		pe->get_nt()->OptionalHeader.AddressOfEntryPoint = jit_instructions.at(0).relocated_address - (uint64_t)pe->get_buffer()->data();
@@ -127,7 +127,7 @@ void obfuscator::remove_jumptables() {
 		for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); instruction++) {
 			if (instruction->has_relative && !instruction->isjmpcall && instruction->relative.size == 32) {
 
-				auto relative_address = instruction->runtime_address + *(int32_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) + instruction->zyinstr.length;
+				auto relative_address = instruction->runtime_address + *(int32_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) + instruction->zyinstr.info.length;
 
 				if (relative_address == (uint64_t)this->pe->get_buffer()->data()) {
 					func->has_jumptables = true;
@@ -152,7 +152,7 @@ bool obfuscator::analyze_functions() {
 
 						uint64_t absolute_address = 0;
 
-						if (!ZYAN_SUCCESS(ZydisCalcAbsoluteAddress(&instruction->zyinstr, &instruction->zyinstr.operands[0], instruction->runtime_address, &absolute_address)))
+						if (!ZYAN_SUCCESS(ZydisCalcAbsoluteAddress(&instruction->zyinstr.info, &instruction->zyinstr.operands[0], instruction->runtime_address, (ZyanU64*) & absolute_address)))
 							return false;
 
 						obfuscator::instruction_t* instptr;
@@ -168,7 +168,7 @@ bool obfuscator::analyze_functions() {
 					}
 					else {
 
-						uint64_t original_data = instruction->runtime_address + instruction->zyinstr.length;
+						uint64_t original_data = instruction->runtime_address + instruction->zyinstr.info.length;
 
 						switch (instruction->relative.size) {
 						case 8:
@@ -209,7 +209,7 @@ void obfuscator::relocate(PIMAGE_SECTION_HEADER new_section) {
 		for (auto instruction = func->instructions.begin(); instruction != func->instructions.end(); ++instruction) {
 
 			instruction->relocated_address = (uint64_t)base + dst + instr_ctr;
-			instr_ctr += instruction->zyinstr.length;
+			instr_ctr += instruction->zyinstr.info.length;
 		}
 
 		used_memory += instr_ctr;
@@ -309,15 +309,15 @@ bool obfuscator::fix_relative_jmps(function_t* func) {
 
 			switch (instruction->relative.size) {
 			case 8: {
-				signed int distance = inst.relocated_address - instruction->relocated_address - instruction->zyinstr.length;
+				signed int distance = inst.relocated_address - instruction->relocated_address - instruction->zyinstr.info.length;
 				if (distance > 127 || distance < -128) {
 
-					if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_JMP) {
+					if (instruction->zyinstr.info.mnemonic == ZYDIS_MNEMONIC_JMP) {
 
 
 						instruction->raw_bytes.resize(5);
 						*(uint8_t*)(instruction->raw_bytes.data()) = 0xE9;
-						*(int32_t*)(&instruction->raw_bytes.data()[1]) = (int32_t)(inst.relocated_address - instruction->relocated_address - instruction->zyinstr.length);
+						*(int32_t*)(&instruction->raw_bytes.data()[1]) = (int32_t)(inst.relocated_address - instruction->relocated_address - instruction->zyinstr.info.length);
 
 						instruction->reload();
 
@@ -330,11 +330,11 @@ bool obfuscator::fix_relative_jmps(function_t* func) {
 					}
 					else {
 
-						uint16_t new_opcode = rel8_to16(instruction->zyinstr.mnemonic);
+						uint16_t new_opcode = rel8_to16(instruction->zyinstr.info.mnemonic);
 
 						instruction->raw_bytes.resize(6);
 						*(uint16_t*)(instruction->raw_bytes.data()) = new_opcode;
-						*(int32_t*)(&instruction->raw_bytes.data()[2]) = (int32_t)(inst.relocated_address - instruction->relocated_address - instruction->zyinstr.length);
+						*(int32_t*)(&instruction->raw_bytes.data()[2]) = (int32_t)(inst.relocated_address - instruction->relocated_address - instruction->zyinstr.info.length);
 
 						instruction->reload();
 
@@ -350,7 +350,7 @@ bool obfuscator::fix_relative_jmps(function_t* func) {
 			}
 
 			case 16: {
-				signed int distance = inst.relocated_address - instruction->relocated_address - instruction->zyinstr.length;
+				signed int distance = inst.relocated_address - instruction->relocated_address - instruction->zyinstr.info.length;
 				if (distance > 32767 || distance < -32768)
 				{
 					//Unlikely, but:
@@ -360,7 +360,7 @@ bool obfuscator::fix_relative_jmps(function_t* func) {
 				break;
 			}
 			case 32: {
-				signed int distance = inst.relocated_address - instruction->relocated_address - instruction->zyinstr.length;
+				signed int distance = inst.relocated_address - instruction->relocated_address - instruction->zyinstr.info.length;
 				if (distance > 2147483647 || distance < -2147483648)
 				{
 					//Shouldn't be possible
@@ -413,25 +413,25 @@ bool obfuscator::apply_relocations(PIMAGE_SECTION_HEADER new_section) {
 
 						switch (instruction->relative.size) {
 						case 8: {
-							uint64_t dst = instruction->runtime_address + *(int8_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) + instruction->zyinstr.length;
-							*(int8_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int8_t)(dst - instruction->relocated_address - instruction->zyinstr.length);
+							uint64_t dst = instruction->runtime_address + *(int8_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) + instruction->zyinstr.info.length;
+							*(int8_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int8_t)(dst - instruction->relocated_address - instruction->zyinstr.info.length);
 							break;
 						}
 						case 16: {
-							uint64_t dst = instruction->runtime_address + *(int16_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) + instruction->zyinstr.length;
-							*(int16_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int16_t)(dst - instruction->relocated_address - instruction->zyinstr.length);
+							uint64_t dst = instruction->runtime_address + *(int16_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) + instruction->zyinstr.info.length;
+							*(int16_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int16_t)(dst - instruction->relocated_address - instruction->zyinstr.info.length);
 							break;
 						}
 						case 32: {
-							uint64_t dst = instruction->runtime_address + *(int32_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) + instruction->zyinstr.length;
-							*(int32_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int32_t)(dst - instruction->relocated_address - instruction->zyinstr.length);
+							uint64_t dst = instruction->runtime_address + *(int32_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) + instruction->zyinstr.info.length;
+							*(int32_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int32_t)(dst - instruction->relocated_address - instruction->zyinstr.info.length);
 							break;
 						}
 						default:
 							return false;
 						}
 
-						memcpy((void*)instruction->relocated_address, instruction->raw_bytes.data(), instruction->zyinstr.length);
+						memcpy((void*)instruction->relocated_address, instruction->raw_bytes.data(), instruction->zyinstr.info.length);
 					}
 					else {
 
@@ -442,24 +442,24 @@ bool obfuscator::apply_relocations(PIMAGE_SECTION_HEADER new_section) {
 
 						switch (instruction->relative.size) {
 						case 8: {
-							*(int8_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int8_t)(inst.relocated_address - instruction->relocated_address - instruction->zyinstr.length);
+							*(int8_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int8_t)(inst.relocated_address - instruction->relocated_address - instruction->zyinstr.info.length);
 							break;
 						}
 						case 16:
-							*(int16_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int16_t)(inst.relocated_address - instruction->relocated_address - instruction->zyinstr.length);
+							*(int16_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int16_t)(inst.relocated_address - instruction->relocated_address - instruction->zyinstr.info.length);
 							break;
 						case 32: {
 							if (inst.is_first_instruction) //Jump to our stub in .text instead of relocated base
-								*(int32_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int32_t)(inst.runtime_address - instruction->relocated_address - instruction->zyinstr.length);
+								*(int32_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int32_t)(inst.runtime_address - instruction->relocated_address - instruction->zyinstr.info.length);
 							else
-								*(int32_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int32_t)(inst.relocated_address - instruction->relocated_address - instruction->zyinstr.length);
+								*(int32_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int32_t)(inst.relocated_address - instruction->relocated_address - instruction->zyinstr.info.length);
 							break;
 						}
 						default:
 							return false;
 						}
 
-						memcpy((void*)instruction->relocated_address, instruction->raw_bytes.data(), instruction->zyinstr.length);
+						memcpy((void*)instruction->relocated_address, instruction->raw_bytes.data(), instruction->zyinstr.info.length);
 					}
 
 				}
@@ -468,27 +468,27 @@ bool obfuscator::apply_relocations(PIMAGE_SECTION_HEADER new_section) {
 					uint64_t dst = instruction->location_of_data;
 					switch (instruction->relative.size) {
 					case 8: {
-						*(int8_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int8_t)(dst - instruction->relocated_address - instruction->zyinstr.length);
+						*(int8_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int8_t)(dst - instruction->relocated_address - instruction->zyinstr.info.length);
 						break;
 					}
 					case 16: {
-						*(int16_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int16_t)(dst - instruction->relocated_address - instruction->zyinstr.length);
+						*(int16_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int16_t)(dst - instruction->relocated_address - instruction->zyinstr.info.length);
 						break;
 					}
 					case 32: {
-						*(int32_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int32_t)(dst - instruction->relocated_address - instruction->zyinstr.length);
+						*(int32_t*)(&instruction->raw_bytes.data()[instruction->relative.offset]) = (int32_t)(dst - instruction->relocated_address - instruction->zyinstr.info.length);
 						break;
 					}
 					default:
 						return false;
 					}
 
-					memcpy((void*)instruction->relocated_address, instruction->raw_bytes.data(), instruction->zyinstr.length);
+					memcpy((void*)instruction->relocated_address, instruction->raw_bytes.data(), instruction->zyinstr.info.length);
 				}
 
 			}
 			else {
-				memcpy((void*)instruction->relocated_address, instruction->raw_bytes.data(), instruction->zyinstr.length);
+				memcpy((void*)instruction->relocated_address, instruction->raw_bytes.data(), instruction->zyinstr.info.length);
 			}
 
 		}
@@ -575,14 +575,14 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section, bool obfuscate_entry_poi
 
 			//Obfuscate ADD
 			if (func->mutateobf) {
-				if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_ADD)
+				if (instruction->zyinstr.info.mnemonic == ZYDIS_MNEMONIC_ADD)
 					this->obfuscate_add(func, instruction);
 			}
 
 
 			//Obfuscate LEA
 			if (func->leaobf) {
-				if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_LEA && instruction->has_relative)
+				if (instruction->zyinstr.info.mnemonic == ZYDIS_MNEMONIC_LEA && instruction->has_relative)
 					this->obfuscsate_lea(func, instruction);
 			}
 
@@ -590,7 +590,7 @@ void obfuscator::run(PIMAGE_SECTION_HEADER new_section, bool obfuscate_entry_poi
 
 			//Obfuscate MOV
 			if (func->movobf) {
-				if (instruction->zyinstr.mnemonic == ZYDIS_MNEMONIC_MOV)
+				if (instruction->zyinstr.info.mnemonic == ZYDIS_MNEMONIC_MOV)
 				{
 					int randnum = rand() % 3 + 1;
 					int i = 0;
@@ -636,13 +636,13 @@ std::vector<obfuscator::instruction_t>obfuscator::instructions_from_jit(uint8_t*
 	std::vector<instruction_t>instructions;
 
 	uint32_t offset = 0;
-	ZydisDecodedInstruction zyinstruction{};
-	while (ZYAN_SUCCESS(ZydisDecoderDecodeBuffer(&decoder, (void*)(code + offset), size - offset, &zyinstruction))) {
+	ZydisDisassembledInstruction zyinstruction{};
+	while (ZYAN_SUCCESS(ZydisDisassembleIntel(ZYDIS_MACHINE_MODE_LONG_64, (ZyanU64)(code + offset), (const void*)(code + offset), size - offset, &zyinstruction))) {
 
 		instruction_t new_instruction{};
 		new_instruction.load(-1, zyinstruction, (uint64_t)(code + offset));
 		instructions.push_back(new_instruction);
-		offset += new_instruction.zyinstr.length;
+		offset += new_instruction.zyinstr.info.length;
 	}
 
 	return instructions;
@@ -684,18 +684,18 @@ bool is_jmpcall(ZydisDecodedInstruction instr)
 
 void obfuscator::instruction_t::load_relative_info() {
 
-	if (!(this->zyinstr.attributes & ZYDIS_ATTRIB_IS_RELATIVE))
+	if (!(this->zyinstr.info.attributes & ZYDIS_ATTRIB_IS_RELATIVE))
 	{
 		this->relative.offset = 0; this->relative.size = 0; this->has_relative = false;
 		return;
 	}
 
 	this->has_relative = true;
-	this->isjmpcall = is_jmpcall(this->zyinstr);
+	this->isjmpcall = is_jmpcall(this->zyinstr.info);
 
 	ZydisInstructionSegments segs;
-	ZydisGetInstructionSegments(&this->zyinstr, &segs);
-	for (uint8_t idx = 0; idx < this->zyinstr.operand_count; ++idx)
+	ZydisGetInstructionSegments(&this->zyinstr.info, &segs);
+	for (uint8_t idx = 0; idx < this->zyinstr.info.operand_count; ++idx)
 	{
 		auto& op = this->zyinstr.operands[idx];
 
@@ -710,8 +710,8 @@ void obfuscator::instruction_t::load_relative_info() {
 
 					if (seg.type == ZYDIS_INSTR_SEGMENT_IMMEDIATE)
 					{
-						this->relative.offset = this->zyinstr.raw.imm->offset;
-						this->relative.size = this->zyinstr.raw.imm->size;
+						this->relative.offset = this->zyinstr.info.raw.imm->offset;
+						this->relative.size = this->zyinstr.info.raw.imm->size;
 						break;
 					}
 				}
@@ -727,8 +727,8 @@ void obfuscator::instruction_t::load_relative_info() {
 
 					if (seg.type == ZYDIS_INSTR_SEGMENT_DISPLACEMENT)
 					{
-						this->relative.offset = this->zyinstr.raw.disp.offset;
-						this->relative.size = this->zyinstr.raw.disp.size;
+						this->relative.offset = this->zyinstr.info.raw.disp.offset;
+						this->relative.size = this->zyinstr.info.raw.disp.size;
 						break;
 					}
 				}
@@ -740,28 +740,28 @@ void obfuscator::instruction_t::load_relative_info() {
 void obfuscator::instruction_t::load(int funcid, std::vector<uint8_t>raw_data) {
 
 	this->inst_id = instruction_id++;
-	ZydisDecoderDecodeBuffer(&decoder, raw_data.data(), raw_data.size(), &this->zyinstr);
+	ZydisDisassembleIntel(ZYDIS_MACHINE_MODE_LONG_64, (ZyanU64)raw_data.data(), (const void*)(raw_data.data()), raw_data.size(), &this->zyinstr);
 	this->func_id = funcid;
 	this->raw_bytes = raw_data;
 	this->load_relative_info();
 }
-void obfuscator::instruction_t::load(int funcid, ZydisDecodedInstruction zyinstruction, uint64_t runtime_address) {
+void obfuscator::instruction_t::load(int funcid, ZydisDisassembledInstruction zyinstruction, uint64_t runtime_address) {
 	this->inst_id = instruction_id++;
 	this->zyinstr = zyinstruction;
 	this->func_id = funcid;
-	this->raw_bytes.resize(this->zyinstr.length); memcpy(this->raw_bytes.data(), (void*)runtime_address, this->zyinstr.length);
+	this->raw_bytes.resize(this->zyinstr.info.length); memcpy(this->raw_bytes.data(), (void*)runtime_address, this->zyinstr.info.length);
 	this->load_relative_info();
 }
 
 void obfuscator::instruction_t::reload() {
-	ZydisDecoderDecodeBuffer(&decoder, this->raw_bytes.data(), this->raw_bytes.size(), &this->zyinstr);
+	ZydisDisassembleIntel(ZYDIS_MACHINE_MODE_LONG_64, (ZyanU64)this->raw_bytes.data(), (const void*)this->raw_bytes.data(), this->raw_bytes.size(), &this->zyinstr);
 	this->load_relative_info();
 }
 
 void obfuscator::instruction_t::print() {
 	char buffer[256];
-	ZydisFormatterFormatInstruction(&formatter, &this->zyinstr,
-		buffer, sizeof(buffer), runtime_address);
+	ZydisFormatterFormatInstruction(&formatter, &this->zyinstr.info,this->zyinstr.operands,this->zyinstr.info.operand_count,
+		buffer, sizeof(buffer), runtime_address, ZYAN_NULL);
 	puts(buffer);
 }
 
