@@ -3,6 +3,7 @@
 #include "Zydis/Zydis.h"
 #include "../pdbparser/pdbparser.h"
 
+#include <bit>
 #include <map>
 #include <string>
 #include <algorithm>
