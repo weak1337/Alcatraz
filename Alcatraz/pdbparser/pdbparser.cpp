@@ -51,6 +51,7 @@ pdbparser::pdbparser(pe64* pe) {
 
 		}
 
+		SymSetSearchPath(GetCurrentProcess(), std::filesystem::path(pdb_path).parent_path().string().c_str());
 		this->module_base = 
 			reinterpret_cast<uint8_t*>(SymLoadModuleEx(GetCurrentProcess(), 0, pdb_path.c_str(), 0, 0x10000000, static_cast<std::uint32_t>(std::filesystem::file_size(pdb_path)), 0, 0));
 
